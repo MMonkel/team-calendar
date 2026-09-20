@@ -1,0 +1,61 @@
+name: Deploy app
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["infra/**", "docs/**", "**.md"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Namen ophalen uit Terraform state
+        id: names
+        run: |
+          echo "registry=${{ vars.ACR_LOGIN_SERVER }}" >> "$GITHUB_OUTPUT"
+          echo "app=${{ vars.CONTAINER_APP_NAME }}" >> "$GITHUB_OUTPUT"
+          echo "group=${{ vars.RESOURCE_GROUP }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build en push image
+        run: |
+          az acr login --name "${{ steps.names.outputs.registry }}"
+          TAG="${{ github.sha }}"
+          docker build -t "${{ steps.names.outputs.registry }}/app:$TAG" .
+          docker push "${{ steps.names.outputs.registry }}/app:$TAG"
+
+      - name: Nieuwe revisie uitrollen
+        run: |
+          az containerapp update \
+            --name "${{ steps.names.outputs.app }}" \
+            --resource-group "${{ steps.names.outputs.group }}" \
+            --image "${{ steps.names.outputs.registry }}/app:${{ github.sha }}"
+
+      - name: Wachten tot de revisie gezond is
+        run: |
+          FQDN=$(az containerapp show \
+            --name "${{ steps.names.outputs.app }}" \
+            --resource-group "${{ steps.names.outputs.group }}" \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          for i in $(seq 1 30); do
+            if curl -fsS "https://$FQDN/api/health" > /dev/null; then
+              echo "OK: https://$FQDN" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Health check faalde na 5 minuten" >&2
+          exit 1

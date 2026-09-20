@@ -1,0 +1,7 @@
+project     = "starter"
+environment = "dev"
+location    = "westeurope"
+
+tags = {
+  owner = "jouw-naam"
+}

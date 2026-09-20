@@ -1,0 +1,19 @@
+# Alleen voor lokale ontwikkeling: een Postgres-database naast de app.
+# Start met: docker compose up -d
+# Daarna eenmalig: cp api/.env.example api/.env && npm run migrate --workspace=api
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
+      POSTGRES_DB: teams
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
