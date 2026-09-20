@@ -18,7 +18,7 @@ variable "environment" {
 variable "location" {
   description = "Azure-regio."
   type        = string
-  default     = "westeurope"
+  default     = "swedencentral"
 }
 
 variable "min_replicas" {
