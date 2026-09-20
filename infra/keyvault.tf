@@ -9,7 +9,7 @@ resource "azurerm_key_vault" "main" {
 
   # Moderne RBAC-toegang in plaats van de oudere access policies: wie een
   # secret mag lezen of schrijven, wordt geregeld met azurerm_role_assignment.
-  enable_rbac_authorization = true
+  rbac_authorization_enabled = true
 
   # Dev-schaal team-app: geen purge protection, zodat 'terraform destroy'
   # de vault ook echt weggooit in plaats van 90 dagen te laten 'soft-deleted'
@@ -28,6 +28,8 @@ resource "azurerm_role_assignment" "deployer_kv_secrets_officer" {
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.current.object_id
+
+  depends_on = [azurerm_key_vault.main]
 }
 
 # De Container App leest de secret via zijn managed identity, alleen om te lezen.
