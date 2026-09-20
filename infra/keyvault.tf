@@ -14,7 +14,7 @@ resource "azurerm_key_vault" "main" {
   # Dev-schaal team-app: geen purge protection, zodat 'terraform destroy'
   # de vault ook echt weggooit in plaats van 90 dagen te laten 'soft-deleted'
   # blijven staan. Zet dit op true zodra dit productie wordt.
-  purge_protection_enabled = false
+  purge_protection_enabled   = false
   soft_delete_retention_days = 7
 
   tags = local.tags
