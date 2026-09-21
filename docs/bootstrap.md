@@ -35,7 +35,7 @@ Zo logt GitHub Actions in bij Azure zonder dat er een wachtwoord in GitHub staat
 Azure vertrouwt tokens die GitHub uitgeeft voor precies deze repo.
 
 ```bash
-REPO="MMonkel/team-calendar"
+REPO="MMonkel@5293847/team-calendar@1376892780"
 SUB_ID=$(az account show --query id -o tsv)
 TENANT_ID=$(az account show --query tenantId -o tsv)
 
