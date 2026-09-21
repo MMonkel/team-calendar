@@ -36,41 +36,25 @@ Azure vertrouwt tokens die GitHub uitgeeft voor precies deze repo.
 
 ```bash
 REPO="<org>/<repo>"
-SUB_ID=$(az account show --query id -o tsv)
-TENANT_ID=$(az account show --query tenantId -o tsv)
-
-APP_ID=$(az ad app create --display-name "gh-$REPO" --query appId -o tsv)
-az ad sp create --id "$APP_ID"
-
-# Toegang tot de subscription. Contributor volstaat voor de app-resources;
-# voor het toekennen van de AcrPull-rol is daarnaast User Access Administrator nodig.
-az role assignment create --assignee "$APP_ID" --role Contributor \
-  --scope "/subscriptions/$SUB_ID"
-az role assignment create --assignee "$APP_ID" --role "User Access Administrator" \
-  --scope "/subscriptions/$SUB_ID"
-
-# Vraagt bij GitHub zelf op welk subject-prefix deze repo gebruikt: met
-# immutable-ID's (repo:OWNER@ID/REPO@ID) of het oude, naam-gebaseerde
-# formaat. Valt terug op het oude formaat als de call niet lukt (bijvoorbeeld
-# een te oude gh-versie, of geen toegang tot deze endpoint).
+APP_ID=$(az ad app list --display-name "gh-$REPO" --query "[0].appId" -o tsv)
 SUB_PREFIX=$(gh api "repos/$REPO/actions/oidc/customization/sub" \
   --jq .sub_claim_prefix 2>/dev/null || echo "repo:$REPO")
-echo "OIDC subject-prefix voor deze repo: $SUB_PREFIX"
 
-# Eén credential per trigger: de environment 'dev' en pull requests.
-az ad app federated-credential create --id "$APP_ID" --parameters "{
-  \"name\": \"gh-env-dev\",
-  \"issuer\": \"https://token.actions.githubusercontent.com\",
-  \"subject\": \"$SUB_PREFIX:environment:dev\",
-  \"audiences\": [\"api://AzureADTokenExchange\"]
-}"
+az ad app federated-credential update --id "$APP_ID" --federated-credential-id gh-env-dev \
+  --parameters "{
+    \"name\": \"gh-env-dev\",
+    \"issuer\": \"https://token.actions.githubusercontent.com\",
+    \"subject\": \"$SUB_PREFIX:environment:dev\",
+    \"audiences\": [\"api://AzureADTokenExchange\"]
+  }"
 
-az ad app federated-credential create --id "$APP_ID" --parameters "{
-  \"name\": \"gh-pull-request\",
-  \"issuer\": \"https://token.actions.githubusercontent.com\",
-  \"subject\": \"$SUB_PREFIX:pull_request\",
-  \"audiences\": [\"api://AzureADTokenExchange\"]
-}"
+az ad app federated-credential update --id "$APP_ID" --federated-credential-id gh-pull-request \
+  --parameters "{
+    \"name\": \"gh-pull-request\",
+    \"issuer\": \"https://token.actions.githubusercontent.com\",
+    \"subject\": \"$SUB_PREFIX:pull_request\",
+    \"audiences\": [\"api://AzureADTokenExchange\"]
+  }"
 ```
 
 ## 3. Secrets in GitHub
