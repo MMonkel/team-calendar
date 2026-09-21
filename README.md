@@ -1,8 +1,8 @@
-# Team S — planning
+# Team S planning
 
 Team-kalender voor Team S: dag/week/maandoverzicht, verlofaanvragen met
 vervangers per dagdeel, en een goedkeuringsflow voor Alexandra en Marc.
-React-frontend en Node/Express-API in één container op Azure Container Apps,
+React-frontend en Node/Express-API in Ã©Ã©n container op Azure Container Apps,
 met Postgres als opslag. Infrastructuur staat als Terraform in dezelfde repo
 en wordt uitgerold door GitHub Actions.
 
@@ -12,7 +12,7 @@ aanvraagstatussen, wie wat mag) en wat er nog naar echte inlog (Entra ID) moet.
 ## Wat er in zit
 
 ```
-shared/   Domeinlogica die api én web gebruiken: rooster, feestdagen, aanvraagregels
+shared/   Domeinlogica die api Ã©n web gebruiken: rooster, feestdagen, aanvraagregels
 api/      Express-API in TypeScript + Postgres
 web/      React + Vite frontend
 infra/    Terraform: resource group, ACR, Container App, Postgres, Key Vault, App Insights
@@ -21,12 +21,12 @@ docs/     Eenmalige setup van Azure en GitHub, en de functionele spelregels
 ```
 
 `shared/` bestaat zodat de regels van het rooster (wie werkt wanneer, welke
-feestdagen, de 3-maandenwaarschuwing) maar op één plek staan. De API gebruikt
+feestdagen, de 3-maandenwaarschuwing) maar op Ã©Ã©n plek staan. De API gebruikt
 ze om aanvragen te valideren; de frontend gebruikt dezelfde functies om
 bijvoorbeeld direct te tonen welke dagdelen je kunt overdragen, zonder een
 rondje naar de server.
 
-Frontend en API zitten bewust in één container: dat scheelt CORS, een tweede
+Frontend en API zitten bewust in Ã©Ã©n container: dat scheelt CORS, een tweede
 deploy-pipeline en een extra resource.
 
 ## Lokaal draaien
@@ -66,7 +66,7 @@ Volg [docs/bootstrap.md](docs/bootstrap.md). Kort samengevat:
 
 ## Hoe een wijziging live komt
 
-Pull request → CI draait typecheck, build en een docker build → na merge naar
+Pull request â†’ CI draait typecheck, build en een docker build â†’ na merge naar
 `main` bouwt Deploy een image met de commit-SHA als tag, pusht die naar ACR en
 zet een nieuwe revisie van de Container App live. Terugrollen is `az containerapp
 update` met een oudere SHA.
@@ -78,7 +78,7 @@ Container App, zodat een infra-apply een lopende deploy niet terugdraait.
 ## Login: nu een placeholder, straks Entra ID
 
 De app vraagt nu bij elk verzoek wie je bent via een header (`x-user`) die de
-frontend zet op basis van een simpele personenkiezer — er wordt niets
+frontend zet op basis van een simpele personenkiezer â€” er wordt niets
 geverifieerd. Dat is bewust zo gehouden om het rooster, de aanvragen en de
 goedkeuringsflow te kunnen bouwen en testen zonder eerst een hele
 inlogketen op te tuigen.
@@ -89,13 +89,13 @@ Voor een echte uitrol moet dit vervangen worden door Microsoft Entra ID:
   in plaats van de `x-user`-header te vertrouwen.
 
 Zolang dat niet is aangesloten, kan iedereen met toegang tot de app zich
-voordoen als wie dan ook — inclusief als admin. Zie de `TODO Entra ID`-comments
+voordoen als wie dan ook â€” inclusief als admin. Zie de `TODO Entra ID`-comments
 in `api/src/middleware/auth.ts` en `web/src/lib/api.ts` voor de precieze plek.
 
 ## Database
 
-E�n tabel (`requests`) met alle drie de aanvraagtypes (vrije
-dag/vakantie, verplaatsing, terugzetten) — zie `api/src/db/schema.sql`. De
+E©n tabel (`requests`) met alle drie de aanvraagtypes (vrije
+dag/vakantie, verplaatsing, terugzetten) â€” zie `api/src/db/schema.sql`. De
 migratie is idempotent (`create table if not exists`) en draait automatisch bij
 elke container-start, dus een nieuwe kolom toevoegen is: schema.sql aanpassen,
 committen, deployen.
@@ -113,7 +113,7 @@ in de orde van een paar tientjes per maand voor een team van deze omvang.
 
 ## Volgende stappen
 
-- Entra ID-login aansluiten (zie hierboven) — dit is de belangrijkste voor een
+- Entra ID-login aansluiten (zie hierboven) â€” dit is de belangrijkste voor een
   echte uitrol.
 - Eigen domein en certificaat op de Container App.
 - Een tweede omgeving: `terraform workspace` of een aparte tfvars per omgeving,
