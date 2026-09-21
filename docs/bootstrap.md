@@ -25,7 +25,7 @@ Terraform moet zijn state ergens bewaren waar de pipeline erbij kan. Deze
 resources beheer je bewust niet met Terraform zelf.
 
 ```bash
-LOCATION=swedencnetral
+LOCATION=swedencentral
 SA_NAME="sttfstate$RANDOM$RANDOM"   # moet globaal uniek zijn
 
 az group create --name rg-tfstate --location $LOCATION
