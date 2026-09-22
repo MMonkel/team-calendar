@@ -30,6 +30,7 @@ export function MonthView({
           >
             <div className="d">{d.getDate()}</div>
             {day.holiday && <div className="holiday" style={{ padding: 0 }}>{day.holiday.name}</div>}
+            {day.activities.map((a) => <div className="activity" key={a.id} title={a.title}>{a.title}</div>)}
             {day.shifts.map((sh) =>
               sh.slots.map((slot, i) => {
                 const name = slot.state === "pending" ? slot.original : slot.actual ?? "—";

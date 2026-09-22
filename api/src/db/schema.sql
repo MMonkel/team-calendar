@@ -24,3 +24,17 @@ create table if not exists requests (
 create index if not exists requests_person_idx on requests (person);
 create index if not exists requests_status_idx on requests (status);
 create index if not exists requests_range_idx on requests (from_date, to_date);
+
+-- Activiteiten die een admin op een hele dag plant (teamuitje, training, ...),
+-- zodat iedereen in de kalender ziet dat er die dag iets is. Los van het
+-- rooster: ze veranderen niets aan wie er staat.
+create table if not exists activities (
+  id          text primary key,
+  date        date not null,
+  title       text not null,
+  note        text not null default '',
+  created_by  text not null,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists activities_date_idx on activities (date);

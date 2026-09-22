@@ -26,7 +26,7 @@ export default function App() {
       <TopBar me={me} onChangeMe={changeMe} onNewRequest={() => setShowNewRequest(true)} />
       <Tabs tab={tab} onChange={setTab} admin={admin} openCount={openCount} />
       <main>
-        {tab === "kalender" && <CalendarPage />}
+        {tab === "kalender" && <CalendarPage admin={admin} />}
         {tab === "mijn" && <MyOverviewPage me={me} key={myRefresh} />}
         {tab === "beoordelen" && admin && <ReviewPage onCountChange={setOpenCount} />}
         {tab === "alle" && admin && <AllRequestsPage />}

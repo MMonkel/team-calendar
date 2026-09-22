@@ -1,4 +1,4 @@
-import type { AnyRequest, DateKey, ExtraDayEntry, FreeDayEntry, Holiday, Person, Replacements } from "shared";
+import type { Activity, AnyRequest, DateKey, ExtraDayEntry, FreeDayEntry, Holiday, Person, Replacements } from "shared";
 
 // TODO Entra ID: dit stuurt nu alleen wie de gebruiker beweert te zijn, in
 // een header die de API vertrouwt zonder bewijs (zie api/src/middleware/auth.ts).
@@ -43,6 +43,7 @@ export interface DayRoster {
     part: "am" | "pm" | "day";
     slots: Array<{ original: Person; actual: Person | null; state: "normal" | "pending" | "away"; request: AnyRequest | null }>;
   }>;
+  activities: Activity[];
 }
 
 export const api = {
@@ -69,6 +70,11 @@ export const api = {
 
   decide: (id: string, body: { approve: boolean; comment?: string }) =>
     request<AnyRequest>(`/requests/${id}/decision`, { method: "POST", body: JSON.stringify(body) }),
+
+  createActivity: (body: { date: DateKey; title: string; note: string }) =>
+    request<Activity>("/activities", { method: "POST", body: JSON.stringify(body) }),
+
+  deleteActivity: (id: string) => request<void>(`/activities/${id}`, { method: "DELETE" }),
 
   freeDays: (year: number, person?: string) =>
     request<FreeDayEntry[]>(`/overview/free-days?year=${year}${person ? "&person=" + person : ""}`),

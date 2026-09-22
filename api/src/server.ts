@@ -7,6 +7,7 @@ import { resolveUser } from "./middleware/auth.js";
 import { requestsRouter } from "./routes/requests.js";
 import { rosterRouter } from "./routes/roster.js";
 import { overviewRouter } from "./routes/overview.js";
+import { activitiesRouter } from "./routes/activities.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -36,6 +37,7 @@ app.get("/api/team", (_req, res) => {
 app.use("/api/requests", resolveUser, requestsRouter);
 app.use("/api/roster", resolveUser, rosterRouter);
 app.use("/api/overview", resolveUser, overviewRouter);
+app.use("/api/activities", resolveUser, activitiesRouter);
 
 // In de container staat de gebouwde frontend naast de gecompileerde API.
 const staticDir = join(here, "..", "public");

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { eachDateKey, effectiveShiftsFor, holidayFor, isValidKey } from "shared";
 import { listRequests } from "../db/requestsRepo.js";
+import { listActivities } from "../db/activitiesRepo.js";
 
 export const rosterRouter = Router();
 
@@ -27,13 +28,14 @@ rosterRouter.get("/", async (req, res) => {
 
   // Eén keer alle relevante aanvragen ophalen (niet per dag): een aanvraag
   // die de periode overlapt, moet ook meetellen als hij er net buiten begint of eindigt.
-  const all = await listRequests();
+  const [all, activities] = await Promise.all([listRequests(), listActivities(from, to)]);
   const relevant = all.filter((r) => r.from <= to && r.to >= from);
 
   const result = days.map((date) => ({
     date,
     holiday: holidayFor(date),
     shifts: effectiveShiftsFor(date, relevant),
+    activities: activities.filter((a) => a.date === date),
   }));
   res.json(result);
 });

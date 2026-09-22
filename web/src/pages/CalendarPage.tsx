@@ -8,11 +8,12 @@ import { DayView, relatedRequests } from "../components/DayView";
 
 type Mode = "day" | "week" | "month";
 
-export function CalendarPage() {
+export function CalendarPage({ admin }: { admin: boolean }) {
   const [mode, setMode] = useState<Mode>("week");
   const [cursor, setCursor] = useState<Date>(() => new Date());
   const [days, setDays] = useState<DayRoster[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
   const today = todayKey();
 
   const { from, to } = useMemo(() => {
@@ -37,7 +38,7 @@ export function CalendarPage() {
       .then((rows) => { if (!cancelled) { setDays(rows); setError(null); } })
       .catch((e) => { if (!cancelled) setError(e.message ?? "Kon de planning niet laden."); });
     return () => { cancelled = true; };
-  }, [from, to]);
+  }, [from, to, reload]);
 
   function step(dir: 1 | -1) {
     if (mode === "day") setCursor(addDays(cursor, dir));
@@ -88,7 +89,12 @@ export function CalendarPage() {
         <MonthView days={days} month={cursor.getMonth()} today={today} onOpenDay={openDay} />
       )}
       {days && mode === "day" && days[0] && (
-        <DayView day={days[0]} related={relatedRequests(days[0])} />
+        <DayView
+          day={days[0]}
+          related={relatedRequests(days[0])}
+          admin={admin}
+          onChanged={() => setReload((n) => n + 1)}
+        />
       )}
     </>
   );

@@ -24,6 +24,7 @@ export function WeekView({
               <span className="dd">{d.getDate()}</span>
             </button>
             {day.holiday && <div className="holiday">{day.holiday.name}</div>}
+            {day.activities.map((a) => <div className="activity" key={a.id} title={a.title}>{a.title}</div>)}
             {day.shifts.map((sh) => (
               <div className={"block" + (sh.part === "day" ? " weekendblock" : "")} key={sh.part}>
                 <div className="part">{PART_LABEL[sh.part]}</div>

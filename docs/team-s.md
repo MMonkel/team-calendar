@@ -69,6 +69,15 @@ Ligt de eerste dag van een aanvraag binnen 3 maanden vanaf vandaag, dan:
 Dit blokkeert niets — het is puur een signaal. Zie `noticeWarning` in
 `shared/src/roster.ts`.
 
+## Activiteiten
+
+Een admin kan in de dagweergave van de kalender een **activiteit** plannen
+op een hele dag (bijvoorbeeld een teamuitje of training): een naam plus een
+optionele toelichting. Iedereen ziet die in de dag-, week- en maandweergave,
+zodat het team er rekening mee kan houden. Een activiteit is puur
+informatief: het rooster en de aanvragen veranderen er niet door. Alleen
+admins kunnen activiteiten aanmaken en verwijderen (`api/src/routes/activities.ts`).
+
 ## Wie ziet wat
 
 * **Kalender** (dag/week/maand): open voor iedereen, onbeperkt bladeren heen

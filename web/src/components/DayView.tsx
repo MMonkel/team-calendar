@@ -1,17 +1,45 @@
-import type { AnyRequest, DateKey } from "shared";
+import { useState } from "react";
+import type { Activity, AnyRequest } from "shared";
 import { fmtLong, fmtRange } from "../lib/format";
 import type { DayRoster } from "../lib/api";
 import { SlotView } from "./SlotView";
 import { Dot, StatusPill, typeLabel } from "./Badges";
+import { ActivityModal } from "./ActivityModal";
+import { api, ApiError } from "../lib/api";
 
 const PART_LABEL: Record<string, string> = { am: "Ochtend", pm: "Middag", day: "Hele dag" };
 
-export function DayView({ day, related }: { day: DayRoster; related: AnyRequest[] }) {
+export function DayView({
+  day, related, admin, onChanged,
+}: {
+  day: DayRoster;
+  related: AnyRequest[];
+  admin: boolean;
+  onChanged: () => void;
+}) {
   const isWeekendLike = day.shifts.length === 1 && day.shifts[0].part === "day";
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function remove(a: Activity) {
+    if (!confirm(`Activiteit "${a.title}" verwijderen?`)) return;
+    setError(null);
+    try {
+      await api.deleteActivity(a.id);
+      onChanged();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Verwijderen mislukte. Probeer het nog eens.");
+    }
+  }
+
   return (
     <>
       <div className="card">
-        <h3>{fmtLong(day.date)}</h3>
+        <div style={{ display: "flex", gap: ".75rem", alignItems: "baseline", flexWrap: "wrap" }}>
+          <h3>{fmtLong(day.date)}</h3>
+          <div style={{ flex: 1 }} />
+          {admin && <button className="btn small" onClick={() => setAdding(true)}>Activiteit plannen</button>}
+        </div>
         {day.holiday && (
           <div className="sub">
             {day.holiday.name}
@@ -19,6 +47,17 @@ export function DayView({ day, related }: { day: DayRoster; related: AnyRequest[
           </div>
         )}
         {!day.holiday && isWeekendLike && <div className="sub">Weekenddag: Alexandra en Marc.</div>}
+        {error && <div className="errorbar">{error}</div>}
+        {day.activities.map((a) => (
+          <div className="activityrow" key={a.id}>
+            <div className="body">
+              <div className="ttl">{a.title}</div>
+              {a.note && <div className="note">{a.note}</div>}
+              <div className="note">Hele dag · gepland door {a.createdBy}</div>
+            </div>
+            {admin && <button className="btn small" onClick={() => remove(a)}>Verwijderen</button>}
+          </div>
+        ))}
         {day.shifts.map((sh) => (
           <div className="shiftrow" key={sh.part}>
             <div className="lab">{PART_LABEL[sh.part]}</div>
@@ -45,6 +84,14 @@ export function DayView({ day, related }: { day: DayRoster; related: AnyRequest[
             </table>
           </div>
         </div>
+      )}
+
+      {adding && (
+        <ActivityModal
+          date={day.date}
+          onClose={() => setAdding(false)}
+          onCreated={() => { setAdding(false); onChanged(); }}
+        />
       )}
     </>
   );
