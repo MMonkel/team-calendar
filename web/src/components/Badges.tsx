@@ -3,6 +3,7 @@ import type { AnyRequest, Person, RequestStatus } from "shared";
 const COLOR: Record<Person, string> = {
   Alexandra: "#6b4fa0", Marc: "#2f6aa8", Nicole: "#1f8a70",
   Celestine: "#a8552f", Mariska: "#9a2f6b", Robin: "#4a7a1f", Marielle: "#8a6b1f",
+  Jim: "#1f7a8a",
 };
 
 export function Dot({ person }: { person: Person | string }) {
