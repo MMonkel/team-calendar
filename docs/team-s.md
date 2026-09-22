@@ -3,7 +3,7 @@
 ## Team
 
 **Admins:** Alexandra, Marc
-**Leden:** Nicole, Celestine, Mariska, Robin, Marielle
+**Leden:** Nicole, Celestine, Mariska, Robin, Marielle, Jim
 
 ## Basisrooster
 

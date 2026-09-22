@@ -3,7 +3,7 @@
 // ermee rekent staat in roster.ts.
 
 export const ADMINS = ["Alexandra", "Marc"] as const;
-export const MEMBERS = ["Nicole", "Celestine", "Mariska", "Robin", "Marielle"] as const;
+export const MEMBERS = ["Nicole", "Celestine", "Mariska", "Robin", "Marielle", "Jim"] as const;
 
 export type Person = (typeof ADMINS)[number] | (typeof MEMBERS)[number];
 
