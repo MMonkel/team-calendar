@@ -8,7 +8,7 @@ import { DayView, relatedRequests } from "../components/DayView";
 
 type Mode = "day" | "week" | "month";
 
-export function CalendarPage({ admin }: { admin: boolean }) {
+export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; refreshSignal?: number }) {
   const [mode, setMode] = useState<Mode>("week");
   const [cursor, setCursor] = useState<Date>(() => new Date());
   const [days, setDays] = useState<DayRoster[] | null>(null);
@@ -38,7 +38,7 @@ export function CalendarPage({ admin }: { admin: boolean }) {
       .then((rows) => { if (!cancelled) { setDays(rows); setError(null); } })
       .catch((e) => { if (!cancelled) setError(e.message ?? "Kon de planning niet laden."); });
     return () => { cancelled = true; };
-  }, [from, to, reload]);
+  }, [from, to, reload, refreshSignal]);
 
   function step(dir: 1 | -1) {
     if (mode === "day") setCursor(addDays(cursor, dir));

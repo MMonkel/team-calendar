@@ -5,7 +5,9 @@ import { fmtRange, fmtShort } from "../lib/format";
 import { Dot } from "../components/Badges";
 import { RejectModal } from "../components/RejectModal";
 
-export function ReviewPage({ onCountChange }: { onCountChange: (n: number) => void }) {
+export function ReviewPage({
+  onCountChange, refreshSignal = 0,
+}: { onCountChange: (n: number) => void; refreshSignal?: number }) {
   const [drafts, setDrafts] = useState<AnyRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<AnyRequest | null>(null);
@@ -22,7 +24,7 @@ export function ReviewPage({ onCountChange }: { onCountChange: (n: number) => vo
       .catch((e) => setError(e instanceof ApiError ? e.message : "Laden mislukte."));
   }
 
-  useEffect(load, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(load, [refreshSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function approve(r: AnyRequest) {
     setBusyId(r.id);

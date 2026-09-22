@@ -5,7 +5,7 @@ import { RequestsTable } from "../components/RequestsTable";
 
 type Filter = "alle" | "draft" | "approved" | "rejected" | "cancelled";
 
-export function AllRequestsPage() {
+export function AllRequestsPage({ refreshSignal = 0 }: { refreshSignal?: number }) {
   const [filter, setFilter] = useState<Filter>("alle");
   const [rows, setRows] = useState<AnyRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export function AllRequestsPage() {
       .then((r) => { if (!cancelled) { setRows(r.sort((a, b) => b.from.localeCompare(a.from))); setError(null); } })
       .catch((e) => { if (!cancelled) setError(e instanceof ApiError ? e.message : "Laden mislukte."); });
     return () => { cancelled = true; };
-  }, [filter]);
+  }, [filter, refreshSignal]);
 
   return (
     <>

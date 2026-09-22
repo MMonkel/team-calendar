@@ -8,7 +8,7 @@ import { RequestsTable } from "../components/RequestsTable";
 import { MoveRequestModal } from "../components/MoveRequestModal";
 import { RevertRequestModal } from "../components/RevertRequestModal";
 
-export function MyOverviewPage({ me }: { me: Person }) {
+export function MyOverviewPage({ me, refreshSignal = 0 }: { me: Person; refreshSignal?: number }) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [mine, setMine] = useState<AnyRequest[] | null>(null);
   const [freeDays, setFreeDays] = useState<FreeDayEntry[] | null>(null);
@@ -34,7 +34,7 @@ export function MyOverviewPage({ me }: { me: Person }) {
       })
       .catch((e) => { if (!cancelled) setError(e instanceof ApiError ? e.message : "Laden mislukte."); });
     return () => { cancelled = true; };
-  }, [me, year, refreshKey]);
+  }, [me, year, refreshKey, refreshSignal]);
 
   function refresh() { setRefreshKey((k) => k + 1); }
 
