@@ -8,7 +8,14 @@ export type Detail =
   | { kind: "request"; request: AnyRequest }
   | { kind: "activity"; activity: Activity };
 
-export function DetailModal({ detail, onClose }: { detail: Detail; onClose: () => void }) {
+export function DetailModal({
+  detail, onClose, onEditActivity,
+}: {
+  detail: Detail;
+  onClose: () => void;
+  /** Alleen voor admins: toont een knop om de activiteit aan te passen. */
+  onEditActivity?: (a: Activity) => void;
+}) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
     document.addEventListener("keydown", onKey);
@@ -24,6 +31,9 @@ export function DetailModal({ detail, onClose }: { detail: Detail; onClose: () =
       <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
         {detail.kind === "request" ? <RequestDetail r={detail.request} /> : <ActivityDetail a={detail.activity} />}
         <div className="modalactions">
+          {detail.kind === "activity" && onEditActivity && (
+            <button className="btn" onClick={() => onEditActivity(detail.activity)}>Aanpassen</button>
+          )}
           <button className="btn primary" onClick={onClose}>Sluiten</button>
         </div>
       </div>
@@ -85,6 +95,12 @@ function ActivityDetail({ a }: { a: Activity }) {
         <dd className="prewrap">{a.note ? a.note : <span className="note">Geen toelichting.</span>}</dd>
         <dt>Gepland door</dt>
         <dd>{a.createdBy}</dd>
+        {a.updatedBy && (
+          <>
+            <dt>Aangepast door</dt>
+            <dd>{a.updatedBy}{a.updatedAt && ` op ${fmtLong(toKey(new Date(a.updatedAt)))}`}</dd>
+          </>
+        )}
       </dl>
     </>
   );

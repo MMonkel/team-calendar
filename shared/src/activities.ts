@@ -9,4 +9,6 @@ export interface Activity {
   note: string;
   createdBy: Person;
   createdAt: string;
+  updatedBy?: Person; // laatste admin die hem aanpaste
+  updatedAt?: string;
 }

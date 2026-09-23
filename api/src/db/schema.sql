@@ -38,3 +38,7 @@ create table if not exists activities (
 );
 
 create index if not exists activities_date_idx on activities (date);
+
+-- Wie een activiteit het laatst heeft aangepast (leeg als hij nooit is aangepast).
+alter table activities add column if not exists updated_by text;
+alter table activities add column if not exists updated_at timestamptz;

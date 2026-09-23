@@ -23,6 +23,7 @@ export function DayView({
   const isWeekendLike = day.shifts.length === 1 && day.shifts[0].part === "day";
   const shifts = visibleShifts(day, showRoster);
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<Activity | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function remove(a: Activity) {
@@ -57,9 +58,17 @@ export function DayView({
             <div className="body">
               <div className="ttl">{a.title}</div>
               {a.note && <div className="note">{a.note}</div>}
-              <div className="note">Hele dag · gepland door {a.createdBy}</div>
+              <div className="note">
+                Hele dag · gepland door {a.createdBy}
+                {a.updatedBy && ` · aangepast door ${a.updatedBy}`}
+              </div>
             </div>
-            {admin && <button className="btn small" onClick={() => remove(a)}>Verwijderen</button>}
+            {admin && (
+              <div className="rowactions">
+                <button className="btn small" onClick={() => setEditing(a)}>Aanpassen</button>
+                <button className="btn small" onClick={() => remove(a)}>Verwijderen</button>
+              </div>
+            )}
           </div>
         ))}
         {shifts.length === 0 && day.activities.length === 0 && (
@@ -94,6 +103,15 @@ export function DayView({
             </table>
           </div>
         </div>
+      )}
+
+      {editing && (
+        <ActivityModal
+          date={editing.date}
+          activity={editing}
+          onClose={() => setEditing(null)}
+          onCreated={() => { setEditing(null); onChanged(); }}
+        />
       )}
 
       {adding && (

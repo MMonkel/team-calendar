@@ -74,6 +74,9 @@ export const api = {
   createActivity: (body: { date: DateKey; title: string; note: string }) =>
     request<Activity>("/activities", { method: "POST", body: JSON.stringify(body) }),
 
+  updateActivity: (id: string, body: { date: DateKey; title: string; note: string }) =>
+    request<Activity>(`/activities/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+
   deleteActivity: (id: string) => request<void>(`/activities/${id}`, { method: "DELETE" }),
 
   freeDays: (year: number, person?: string) =>

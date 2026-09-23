@@ -7,6 +7,8 @@ import { MonthView } from "../components/MonthView";
 import { DayView, relatedRequests } from "../components/DayView";
 import { PrintButton, PrintHeader } from "../components/Print";
 import { type Detail, DetailModal } from "../components/DetailModal";
+import { ActivityModal } from "../components/ActivityModal";
+import type { Activity } from "shared";
 
 type Mode = "day" | "week" | "month";
 
@@ -17,6 +19,7 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const [detail, setDetail] = useState<Detail | null>(null);
+  const [editActivity, setEditActivity] = useState<Activity | null>(null);
   const [showRoster, setShowRoster] = useState(() => {
     try { return localStorage.getItem("teams.showRoster") === "1"; } catch { return false; }
   });
@@ -118,7 +121,21 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
           onChanged={() => setReload((n) => n + 1)}
         />
       )}
-      {detail && <DetailModal detail={detail} onClose={() => setDetail(null)} />}
+      {detail && (
+        <DetailModal
+          detail={detail}
+          onClose={() => setDetail(null)}
+          onEditActivity={admin ? (a) => { setDetail(null); setEditActivity(a); } : undefined}
+        />
+      )}
+      {editActivity && (
+        <ActivityModal
+          date={editActivity.date}
+          activity={editActivity}
+          onClose={() => setEditActivity(null)}
+          onCreated={() => { setEditActivity(null); setReload((n) => n + 1); }}
+        />
+      )}
     </>
   );
 }
