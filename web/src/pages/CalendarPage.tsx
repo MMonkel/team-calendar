@@ -11,7 +11,12 @@ import { ActivityModal } from "../components/ActivityModal";
 import { useAdminRequestActions } from "../components/AdminRequestModals";
 import type { Activity } from "shared";
 
-type Mode = "day" | "week" | "month";
+type Mode = "day" | "workweek" | "week" | "month";
+
+const MODE_LABEL: Record<Mode, string> = { day: "Dag", workweek: "Werkweek", week: "Week", month: "Maand" };
+const MODE_SUB: Record<Mode, string> = {
+  day: "Dagoverzicht", workweek: "Werkweekoverzicht", week: "Weekoverzicht", month: "Maandoverzicht",
+};
 
 export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; refreshSignal?: number }) {
   const [mode, setMode] = useState<Mode>("week");
@@ -37,9 +42,9 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
       const k = toKey(cursor);
       return { from: k, to: k };
     }
-    if (mode === "week") {
+    if (mode === "week" || mode === "workweek") {
       const start = startOfWeek(cursor);
-      return { from: toKey(start), to: toKey(addDays(start, 6)) };
+      return { from: toKey(start), to: toKey(addDays(start, mode === "workweek" ? 4 : 6)) };
     }
     // month: render a full 6-week grid so the layout never jumps
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
@@ -58,7 +63,7 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
 
   function step(dir: 1 | -1) {
     if (mode === "day") setCursor(addDays(cursor, dir));
-    else if (mode === "week") setCursor(addDays(cursor, 7 * dir));
+    else if (mode === "week" || mode === "workweek") setCursor(addDays(cursor, 7 * dir));
     else setCursor(addMonths(cursor, dir));
   }
 
@@ -74,7 +79,7 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
       ? `${MONTHS[cursor.getMonth()]} ${cursor.getFullYear()}`
       : (() => {
           const start = startOfWeek(cursor);
-          const end = addDays(start, 6);
+          const end = addDays(start, mode === "workweek" ? 4 : 6);
           return `Week ${weekNumber(start)} · ${fmtRange(toKey(start), toKey(end))}`;
         })();
 
@@ -82,7 +87,7 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
     <>
       <PrintHeader
         title={`Rooster — ${mode === "day" ? fmtLong(toKey(cursor)) : title}`}
-        sub={{ day: "Dagoverzicht", week: "Weekoverzicht", month: "Maandoverzicht" }[mode] + (showRoster ? "" : " · alleen vrij, gewisseld en activiteiten")}
+        sub={MODE_SUB[mode] + (showRoster ? "" : " · alleen vrij, gewisseld en activiteiten")}
         landscape={mode !== "day"}
       />
       <div className="periodbar">
@@ -94,22 +99,22 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
         <h2>{title}</h2>
         <div className="spacer" />
         <div className="seg">
-          {(["day", "week", "month"] as Mode[]).map((m) => (
+          {(["day", "workweek", "week", "month"] as Mode[]).map((m) => (
             <button key={m} data-active={mode === m} onClick={() => setMode(m)}>
-              {{ day: "Dag", week: "Week", month: "Maand" }[m]}
+              {MODE_LABEL[m]}
             </button>
           ))}
         </div>
         <button className="btn" aria-pressed={showRoster} data-active={showRoster} onClick={toggleRoster}>
           {showRoster ? "Rooster verbergen" : "Rooster tonen"}
         </button>
-        <PrintButton label={{ day: "Print dag", week: "Print week", month: "Print maand" }[mode]} />
+        <PrintButton label={`Print ${MODE_LABEL[mode].toLowerCase()}`} />
       </div>
 
       {error && <div className="errorbar">{error}</div>}
       {!days && !error && <div className="empty">Bezig met laden…</div>}
 
-      {days && mode === "week" && <WeekView days={days} today={today} showRoster={showRoster} onOpenDay={openDay} onOpenDetail={setDetail} />}
+      {days && (mode === "week" || mode === "workweek") && <WeekView days={days} workweek={mode === "workweek"} today={today} showRoster={showRoster} onOpenDay={openDay} onOpenDetail={setDetail} />}
       {days && mode === "month" && (
         <MonthView days={days} month={cursor.getMonth()} today={today} showRoster={showRoster} onOpenDay={openDay} onOpenDetail={setDetail} />
       )}

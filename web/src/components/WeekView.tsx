@@ -7,16 +7,18 @@ import { SlotView, visibleShifts } from "./SlotView";
 const PART_LABEL: Record<string, string> = { am: "Ochtend", pm: "Middag", day: "Hele dag" };
 
 export function WeekView({
-  days, today, showRoster, onOpenDay, onOpenDetail,
+  days, today, showRoster, onOpenDay, onOpenDetail, workweek = false,
 }: {
   days: DayRoster[];
+  /** Alleen maandag t/m vrijdag: vijf kolommen. */
+  workweek?: boolean;
   today: DateKey;
   showRoster: boolean;
   onOpenDay: (k: DateKey) => void;
   onOpenDetail: (d: Detail) => void;
 }) {
   return (
-    <div className="weekgrid">
+    <div className={"weekgrid" + (workweek ? " work" : "")}>
       {days.map((day) => {
         const d = new Date(day.date + "T00:00:00");
         const isToday = day.date === today;
