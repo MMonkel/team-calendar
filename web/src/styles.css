@@ -37,6 +37,10 @@ button{font:inherit; color:inherit;}
 .brand b{font-size:1.15rem;}
 .brand span{color:var(--muted); font-size:.85rem;}
 .spacer{flex:1 1 auto;}
+.brandbtn{border:0; background:none; padding:0; color:inherit; font:inherit; text-align:left; cursor:pointer;}
+.modal.about{width:min(20rem,100%); text-align:center;}
+.modal.about h3{font-family:Iowan Old Style,"Palatino Linotype",Palatino,Georgia,serif; font-size:1.5rem;}
+.modal.about .modalactions{justify-content:center;}
 .who{display:flex; align-items:center; gap:.45rem; font-size:.9rem;}
 .who select{font:inherit; padding:.32rem .5rem; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--ink);}
 
