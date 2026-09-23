@@ -15,6 +15,14 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
   const [days, setDays] = useState<DayRoster[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const [showRoster, setShowRoster] = useState(() => {
+    try { return localStorage.getItem("teams.showRoster") === "1"; } catch { return false; }
+  });
+  function toggleRoster() {
+    const next = !showRoster;
+    setShowRoster(next);
+    try { localStorage.setItem("teams.showRoster", next ? "1" : "0"); } catch { /* niet erg */ }
+  }
   const today = todayKey();
 
   const { from, to } = useMemo(() => {
@@ -67,7 +75,7 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
     <>
       <PrintHeader
         title={`Rooster — ${mode === "day" ? fmtLong(toKey(cursor)) : title}`}
-        sub={{ day: "Dagoverzicht", week: "Weekoverzicht", month: "Maandoverzicht" }[mode]}
+        sub={{ day: "Dagoverzicht", week: "Weekoverzicht", month: "Maandoverzicht" }[mode] + (showRoster ? "" : " · alleen vrij, gewisseld en activiteiten")}
         landscape={mode !== "day"}
       />
       <div className="periodbar">
@@ -85,21 +93,25 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
             </button>
           ))}
         </div>
+        <button className="btn" aria-pressed={showRoster} data-active={showRoster} onClick={toggleRoster}>
+          {showRoster ? "Rooster verbergen" : "Rooster tonen"}
+        </button>
         <PrintButton label={{ day: "Print dag", week: "Print week", month: "Print maand" }[mode]} />
       </div>
 
       {error && <div className="errorbar">{error}</div>}
       {!days && !error && <div className="empty">Bezig met laden…</div>}
 
-      {days && mode === "week" && <WeekView days={days} today={today} onOpenDay={openDay} />}
+      {days && mode === "week" && <WeekView days={days} today={today} showRoster={showRoster} onOpenDay={openDay} />}
       {days && mode === "month" && (
-        <MonthView days={days} month={cursor.getMonth()} today={today} onOpenDay={openDay} />
+        <MonthView days={days} month={cursor.getMonth()} today={today} showRoster={showRoster} onOpenDay={openDay} />
       )}
       {days && mode === "day" && days[0] && (
         <DayView
           day={days[0]}
           related={relatedRequests(days[0])}
           admin={admin}
+          showRoster={showRoster}
           onChanged={() => setReload((n) => n + 1)}
         />
       )}

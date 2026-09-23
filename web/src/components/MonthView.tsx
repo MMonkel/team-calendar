@@ -1,15 +1,17 @@
 import { type DateKey } from "shared";
 import type { DayRoster } from "../lib/api";
 import { Dot } from "./Badges";
+import { visibleShifts } from "./SlotView";
 
 const MINI_LABEL: Record<string, string> = { am: "och", pm: "mid", day: "" };
 
 export function MonthView({
-  days, month, today, onOpenDay,
+  days, month, today, showRoster, onOpenDay,
 }: {
   days: DayRoster[];
   month: number; // 0-based month this grid represents; days outside it render dimmed
   today: DateKey;
+  showRoster: boolean;
   onOpenDay: (k: DateKey) => void;
 }) {
   return (
@@ -31,15 +33,24 @@ export function MonthView({
             <div className="d">{d.getDate()}</div>
             {day.holiday && <div className="holiday" style={{ padding: 0 }}>{day.holiday.name}</div>}
             {day.activities.map((a) => <div className="activity" key={a.id} title={a.title}>{a.title}</div>)}
-            {day.shifts.map((sh) =>
+            {visibleShifts(day, showRoster).map((sh) =>
               sh.slots.map((slot, i) => {
-                const name = slot.state === "pending" ? slot.original : slot.actual ?? "—";
-                const cls = slot.state === "normal" ? "" : slot.state === "pending" ? "t-draft" : slot.actual ? "" : "t-empty";
+                if (slot.state !== "normal") {
+                  // Wie er vrij is, en wie het overneemt.
+                  return (
+                    <div className="mini" key={sh.part + i}>
+                      {MINI_LABEL[sh.part] && <span className="lbl">{MINI_LABEL[sh.part]}</span>}
+                      <Dot person={slot.original} />
+                      <span className={"nm" + (slot.state === "pending" ? " t-draft" : "")}>{slot.original}</span>
+                      <span className={"lbl" + (slot.actual ? "" : " t-empty")}>→ {slot.actual ?? "open"}</span>
+                    </div>
+                  );
+                }
                 return (
                   <div className="mini" key={sh.part + i}>
                     {MINI_LABEL[sh.part] && <span className="lbl">{MINI_LABEL[sh.part]}</span>}
-                    {(slot.actual || slot.state === "pending") && <Dot person={name} />}
-                    <span className={"nm" + (cls ? " " + cls : "")}>{name}</span>
+                    <Dot person={slot.original} />
+                    <span className="nm">{slot.original}</span>
                   </div>
                 );
               }),

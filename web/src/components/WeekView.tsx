@@ -1,15 +1,16 @@
 import { type DateKey, toKey } from "shared";
 import { DAY_NAMES } from "../lib/format";
 import type { DayRoster } from "../lib/api";
-import { SlotView } from "./SlotView";
+import { SlotView, visibleShifts } from "./SlotView";
 
 const PART_LABEL: Record<string, string> = { am: "Ochtend", pm: "Middag", day: "Hele dag" };
 
 export function WeekView({
-  days, today, onOpenDay,
+  days, today, showRoster, onOpenDay,
 }: {
   days: DayRoster[];
   today: DateKey;
+  showRoster: boolean;
   onOpenDay: (k: DateKey) => void;
 }) {
   return (
@@ -17,6 +18,8 @@ export function WeekView({
       {days.map((day) => {
         const d = new Date(day.date + "T00:00:00");
         const isToday = day.date === today;
+        const isWeekendLike = day.shifts.length === 1 && day.shifts[0].part === "day";
+        const shifts = visibleShifts(day, showRoster);
         return (
           <div className="daycol" key={day.date}>
             <button className={"dayhead" + (isToday ? " today" : "")} onClick={() => onOpenDay(day.date)}>
@@ -25,7 +28,10 @@ export function WeekView({
             </button>
             {day.holiday && <div className="holiday">{day.holiday.name}</div>}
             {day.activities.map((a) => <div className="activity" key={a.id} title={a.title}>{a.title}</div>)}
-            {day.shifts.map((sh) => (
+            {shifts.length === 0 && day.activities.length === 0 && (
+              <div className={"block emptyday" + (isWeekendLike ? " weekendblock" : "")} />
+            )}
+            {shifts.map((sh) => (
               <div className={"block" + (sh.part === "day" ? " weekendblock" : "")} key={sh.part}>
                 <div className="part">{PART_LABEL[sh.part]}</div>
                 {sh.slots.map((slot, i) => <SlotView slot={slot} key={i} />)}

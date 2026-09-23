@@ -4,6 +4,17 @@ import type { DayRoster } from "../lib/api";
 
 type Slot = DayRoster["shifts"][number]["slots"][number];
 
+/**
+ * Dagdelen om te tonen. Zonder het volledige rooster alleen de afwijkingen:
+ * iemand is vrij (met of zonder vervanger) of heeft een openstaande aanvraag.
+ */
+export function visibleShifts(day: DayRoster, showRoster: boolean): DayRoster["shifts"] {
+  if (showRoster) return day.shifts;
+  return day.shifts
+    .map((sh) => ({ ...sh, slots: sh.slots.filter((s) => s.state !== "normal") }))
+    .filter((sh) => sh.slots.length > 0);
+}
+
 export function SlotView({ slot }: { slot: Slot }) {
   if (slot.state === "normal") {
     return (

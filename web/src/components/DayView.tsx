@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Activity, AnyRequest } from "shared";
 import { fmtLong, fmtRange } from "../lib/format";
 import type { DayRoster } from "../lib/api";
-import { SlotView } from "./SlotView";
+import { SlotView, visibleShifts } from "./SlotView";
 import { Dot, StatusPill, typeLabel } from "./Badges";
 import { ActivityModal } from "./ActivityModal";
 import { api, ApiError } from "../lib/api";
@@ -10,14 +10,16 @@ import { api, ApiError } from "../lib/api";
 const PART_LABEL: Record<string, string> = { am: "Ochtend", pm: "Middag", day: "Hele dag" };
 
 export function DayView({
-  day, related, admin, onChanged,
+  day, related, admin, showRoster, onChanged,
 }: {
   day: DayRoster;
+  showRoster: boolean;
   related: AnyRequest[];
   admin: boolean;
   onChanged: () => void;
 }) {
   const isWeekendLike = day.shifts.length === 1 && day.shifts[0].part === "day";
+  const shifts = visibleShifts(day, showRoster);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,10 +45,10 @@ export function DayView({
         {day.holiday && (
           <div className="sub">
             {day.holiday.name}
-            {day.holiday.adminsOnly ? " — Alexandra en Marc draaien deze dag." : " — het team werkt deze dag gewoon."}
+            {showRoster && (day.holiday.adminsOnly ? " — Alexandra en Marc draaien deze dag." : " — het team werkt deze dag gewoon.")}
           </div>
         )}
-        {!day.holiday && isWeekendLike && <div className="sub">Weekenddag: Alexandra en Marc.</div>}
+        {showRoster && !day.holiday && isWeekendLike && <div className="sub">Weekenddag: Alexandra en Marc.</div>}
         {error && <div className="errorbar">{error}</div>}
         {day.activities.map((a) => (
           <div className="activityrow" key={a.id}>
@@ -58,7 +60,10 @@ export function DayView({
             {admin && <button className="btn small" onClick={() => remove(a)}>Verwijderen</button>}
           </div>
         ))}
-        {day.shifts.map((sh) => (
+        {shifts.length === 0 && day.activities.length === 0 && (
+          <div className="empty">Geen bijzonderheden: niemand vrij of gewisseld.</div>
+        )}
+        {shifts.map((sh) => (
           <div className="shiftrow" key={sh.part}>
             <div className="lab">{PART_LABEL[sh.part]}</div>
             <div className="people">{sh.slots.map((s, i) => <SlotView slot={s} key={i} />)}</div>
