@@ -113,6 +113,7 @@ td.num{font-variant-numeric:tabular-nums; white-space:nowrap;}
 .p-approved{background:var(--ok-bg); color:var(--ok);}
 .p-rejected{background:var(--bad-bg); color:var(--bad);}
 .p-cancelled{background:var(--line); color:var(--muted);}
+.p-deleted{background:var(--bad-bg); color:var(--bad); text-decoration:line-through;}
 .empty{color:var(--muted); padding:1.5rem 0;}
 .warn{display:flex; gap:.6rem; align-items:flex-start; background:var(--draft-bg); color:var(--draft); border-radius:9px; padding:.65rem .8rem; font-size:.88rem; margin:.6rem 0;}
 .warn b{display:block;}
@@ -129,6 +130,12 @@ tr.tappable:hover td{background:var(--paper);}
 .details{display:grid; grid-template-columns:auto 1fr; gap:.45rem 1rem; margin:.9rem 0 0;}
 .details dt{color:var(--muted); font-size:.85rem; padding-top:.1rem;}
 .details dd{margin:0; min-width:0; overflow-wrap:anywhere;}
+.details.compact{margin-top:.4rem; gap:.25rem .8rem; font-size:.88rem;}
+.history{margin-top:1.1rem; border-top:1px solid var(--line); padding-top:.8rem;}
+.history h4{margin:.8rem 0 0; font-size:.8rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+.history h4:first-child{margin-top:0;}
+.history .change{padding:.55rem 0; border-bottom:1px solid var(--line); font-size:.9rem;}
+.history .change:last-child{border-bottom:0;}
 .errorbar{background:var(--bad-bg); color:var(--bad); padding:.5rem .8rem; border-radius:8px; margin-bottom:.8rem; font-size:.88rem;}
 
 .overlay{position:fixed; inset:0; background:rgba(10,14,12,.45); z-index:50; display:flex; align-items:flex-start; justify-content:center; padding:1rem; overflow:auto;}

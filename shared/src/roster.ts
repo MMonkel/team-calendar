@@ -62,7 +62,8 @@ export function isShortNotice(fromK: DateKey, today: DateKey = todayKey()): bool
 // ---------------------------------------------------------------------------
 
 export type RequestType = "absence" | "move" | "revert";
-export type RequestStatus = "draft" | "approved" | "rejected" | "cancelled";
+/** "deleted": door een admin verwijderd; blijft zichtbaar in de overzichten, telt niet meer mee. */
+export type RequestStatus = "draft" | "approved" | "rejected" | "cancelled" | "deleted";
 export type AbsenceKind = "day" | "vacation";
 
 /** Vervangingen per dagdeel: sleutel is shiftKey(date, part), waarde is de vervanger. */
@@ -83,6 +84,7 @@ export interface AbsenceRequest {
   reviewedBy?: Person;
   reviewedAt?: string;
   comment?: string; // reden bij afkeuren
+  changeCount?: number; // aantal wijzigingen in de geschiedenis
 }
 
 export interface MoveRequest {
@@ -102,6 +104,7 @@ export interface MoveRequest {
   reviewedBy?: Person;
   reviewedAt?: string;
   comment?: string;
+  changeCount?: number; // aantal wijzigingen in de geschiedenis
 }
 
 export interface RevertRequest {
@@ -121,9 +124,48 @@ export interface RevertRequest {
   reviewedBy?: Person;
   reviewedAt?: string;
   comment?: string;
+  changeCount?: number; // aantal wijzigingen in de geschiedenis
 }
 
 export type AnyRequest = AbsenceRequest | MoveRequest | RevertRequest;
+
+/** Hoe een aanvraag eruitzag vóór (en na) een wijziging; bewaard in de geschiedenis. */
+export interface RequestSnapshot {
+  kind?: AbsenceKind;
+  from: DateKey;
+  to: DateKey;
+  replacements: Replacements;
+  note: string;
+  status: RequestStatus;
+}
+
+export type ChangeAction =
+  | "edit" // aangepast (en/of verplaatst) door een admin
+  | "delete" // verwijderd door een admin
+  | "move" // verplaatst na goedkeuring van een verplaatsingsaanvraag
+  | "revert"; // teruggezet na goedkeuring van een terugzetaanvraag
+
+export interface RequestChange {
+  id: string;
+  requestId: string;
+  action: ChangeAction;
+  by: Person;
+  at: string; // ISO
+  reason: string;
+  before: RequestSnapshot;
+  after: RequestSnapshot | null; // null bij verwijderen
+}
+
+export function snapshotOf(r: AnyRequest): RequestSnapshot {
+  return {
+    ...(r.type === "absence" ? { kind: r.kind } : {}),
+    from: r.from,
+    to: r.to,
+    replacements: r.replacements,
+    note: r.note,
+    status: r.status,
+  };
+}
 
 function coversDate(r: AbsenceRequest, k: DateKey): boolean {
   return k >= r.from && k <= r.to;
@@ -186,7 +228,7 @@ export function freeDaysForYear(person: Person, year: number, requests: AnyReque
   const out: FreeDayEntry[] = [];
   for (const r of requests) {
     if (r.type !== "absence" || r.person !== person) continue;
-    if (r.status === "rejected" || r.status === "cancelled") continue;
+    if (r.status !== "draft" && r.status !== "approved") continue;
     for (const k of eachDateKey(r.from, r.to)) {
       if (fromKey(k).getFullYear() !== year) continue;
       for (const s of baseShiftsFor(k)) {
@@ -216,7 +258,7 @@ export function extraDaysForYear(person: Person, year: number, requests: AnyRequ
   const out: ExtraDayEntry[] = [];
   for (const r of requests) {
     if (r.type !== "absence") continue;
-    if (r.status === "rejected" || r.status === "cancelled") continue;
+    if (r.status !== "draft" && r.status !== "approved") continue;
     for (const [sk, replacement] of Object.entries(r.replacements)) {
       if (replacement !== person) continue;
       const [k, part] = sk.split("|") as [DateKey, DayPart];

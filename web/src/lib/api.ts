@@ -1,4 +1,6 @@
-import type { Activity, AnyRequest, DateKey, ExtraDayEntry, FreeDayEntry, Holiday, Person, Replacements } from "shared";
+import type {
+  AbsenceKind, Activity, AnyRequest, DateKey, ExtraDayEntry, FreeDayEntry, Holiday, Person, Replacements, RequestChange,
+} from "shared";
 
 // TODO Entra ID: dit stuurt nu alleen wie de gebruiker beweert te zijn, in
 // een header die de API vertrouwt zonder bewijs (zie api/src/middleware/auth.ts).
@@ -67,6 +69,15 @@ export const api = {
 
   revertRequest: (id: string, body: { note: string }) =>
     request<AnyRequest>(`/requests/${id}/revert`, { method: "POST", body: JSON.stringify(body) }),
+
+  // Alleen admins: direct aanpassen/verplaatsen of verwijderen, met geschiedenis.
+  updateRequest: (id: string, body: { kind: AbsenceKind; from: DateKey; to: DateKey; note: string; replacements: Replacements; reason: string }) =>
+    request<AnyRequest>(`/requests/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+
+  removeRequest: (id: string, body: { reason: string }) =>
+    request<AnyRequest>(`/requests/${id}/remove`, { method: "POST", body: JSON.stringify(body) }),
+
+  requestChanges: (id: string) => request<RequestChange[]>(`/requests/${id}/changes`),
 
   decide: (id: string, body: { approve: boolean; comment?: string }) =>
     request<AnyRequest>(`/requests/${id}/decision`, { method: "POST", body: JSON.stringify(body) }),

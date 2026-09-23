@@ -49,6 +49,25 @@ Deze kaskade-logica (wat er met de oorspronkelijke aanvraag gebeurt bij
 goedkeuring van een move/revert) staat op één plek:
 `api/src/domain/requestRules.ts` → `cascadeForApproval`.
 
+### Aanpassen en verwijderen door een admin
+
+Alexandra en Marc kunnen een vrije dag of vakantie (concept of definitief)
+ook **direct aanpassen** — soort, datums (verplaatsen), vervangers en
+toelichting — of **verwijderen**. Dat gaat niet opnieuw langs de beoordeling.
+Verwijderen zet de status op `deleted` ("Verwijderd"): de aanvraag telt niet
+meer mee in rooster en jaaroverzichten, maar blijft in de overzichten staan.
+Openstaande verplaatsingen of terugzettingen van die aanvraag worden
+automatisch afgekeurd.
+
+### Geschiedenis
+
+Elke wijziging aan een aanvraag komt in de tabel `request_changes`, met hoe
+de aanvraag er vóór (en na) uitzag en eventueel een reden: aanpassen en
+verwijderen door een admin, en ook een goedgekeurde verplaatsing of
+terugzetting. Zo is de oorspronkelijke aanvraag altijd terug te zien in het
+detailvenster. Admins zien de geschiedenis van alle aanvragen, teamleden die
+van hun eigen aanvragen.
+
 ## Vervangers per dagdeel
 
 Een aanvraag voor meerdere dagen kan per dagdeel een andere vervanger hebben —
@@ -76,7 +95,7 @@ op een hele dag (bijvoorbeeld een teamuitje of training): een naam plus een
 optionele toelichting. Iedereen ziet die in de dag-, week- en maandweergave,
 zodat het team er rekening mee kan houden. Een activiteit is puur
 informatief: het rooster en de aanvragen veranderen er niet door. Alleen
-admins kunnen activiteiten aanmaken en verwijderen (`api/src/routes/activities.ts`).
+admins kunnen activiteiten aanmaken, aanpassen en verwijderen (`api/src/routes/activities.ts`).
 
 ## Wie ziet wat
 
@@ -88,7 +107,9 @@ admins kunnen activiteiten aanmaken en verwijderen (`api/src/routes/activities.t
   vervanger draait die niet je eigen rooster waren.
 * **Te beoordelen** (alleen admins): alle openstaande concepten, één voor één,
   met een waarschuwing als er dagdelen zonder vervanger zijn.
-* **Alle aanvragen** (alleen admins): volledige lijst met statusfilter.
+* **Alle aanvragen** (alleen admins): volledige lijst met statusfilter, met
+  per aanvraag aanpassen of verwijderen. Tik op een aanvraag voor de details,
+  de oorspronkelijke aanvraag en alle wijzigingen.
 
 ## Wat nog niet af is
 

@@ -8,6 +8,7 @@ import { DayView, relatedRequests } from "../components/DayView";
 import { PrintButton, PrintHeader } from "../components/Print";
 import { type Detail, DetailModal } from "../components/DetailModal";
 import { ActivityModal } from "../components/ActivityModal";
+import { useAdminRequestActions } from "../components/AdminRequestModals";
 import type { Activity } from "shared";
 
 type Mode = "day" | "week" | "month";
@@ -20,6 +21,7 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
   const [reload, setReload] = useState(0);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [editActivity, setEditActivity] = useState<Activity | null>(null);
+  const requestActions = useAdminRequestActions(() => setReload((n) => n + 1));
   const [showRoster, setShowRoster] = useState(() => {
     try { return localStorage.getItem("teams.showRoster") === "1"; } catch { return false; }
   });
@@ -126,8 +128,11 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
           detail={detail}
           onClose={() => setDetail(null)}
           onEditActivity={admin ? (a) => { setDetail(null); setEditActivity(a); } : undefined}
+          onEditRequest={admin ? (r) => { setDetail(null); requestActions.edit(r); } : undefined}
+          onRemoveRequest={admin ? (r) => { setDetail(null); requestActions.remove(r); } : undefined}
         />
       )}
+      {requestActions.modals}
       {editActivity && (
         <ActivityModal
           date={editActivity.date}

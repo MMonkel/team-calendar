@@ -1,4 +1,4 @@
-import type { AnyRequest, DateKey, Replacements } from "shared";
+import type { AbsenceKind, AnyRequest, DateKey, Replacements, RequestChange, RequestStatus } from "shared";
 import { pool } from "./pool.js";
 
 interface Row {
@@ -13,12 +13,13 @@ interface Row {
   to_date: string;
   replacements: Replacements;
   note: string;
-  status: "draft" | "approved" | "rejected" | "cancelled";
+  status: RequestStatus;
   short_notice: boolean;
   created_at: string;
   reviewed_by: string | null;
   reviewed_at: string | null;
   comment: string | null;
+  change_count: number;
 }
 
 // node-postgres geeft 'date'-kolommen terug als JS Date; we willen overal
@@ -30,7 +31,8 @@ const SELECT_COLUMNS = `
   to_char(from_date, 'YYYY-MM-DD') as from_date,
   to_char(to_date, 'YYYY-MM-DD') as to_date,
   replacements, note, status, short_notice,
-  created_at, reviewed_by, reviewed_at, comment
+  created_at, reviewed_by, reviewed_at, comment,
+  (select count(*)::int from request_changes c where c.request_id = requests.id) as change_count
 `;
 
 function toDomain(row: Row): AnyRequest {
@@ -47,6 +49,7 @@ function toDomain(row: Row): AnyRequest {
     ...(row.reviewed_by ? { reviewedBy: row.reviewed_by as AnyRequest["person"] } : {}),
     ...(row.reviewed_at ? { reviewedAt: row.reviewed_at } : {}),
     ...(row.comment != null ? { comment: row.comment } : {}),
+    ...(row.change_count > 0 ? { changeCount: row.change_count } : {}),
   };
 
   if (row.type === "absence") {
@@ -109,7 +112,7 @@ export async function insertRequest(r: AnyRequest): Promise<void> {
 export async function updateRequestFields(
   id: string,
   fields: Partial<{
-    from: DateKey; to: DateKey; replacements: Replacements;
+    kind: AbsenceKind; from: DateKey; to: DateKey; replacements: Replacements; note: string;
     status: AnyRequest["status"]; reviewedBy: string; reviewedAt: string; comment: string;
   }>,
 ): Promise<void> {
@@ -117,9 +120,11 @@ export async function updateRequestFields(
   const params: unknown[] = [];
   const push = (col: string, val: unknown) => { params.push(val); set.push(`${col} = $${params.length}`); };
 
+  if (fields.kind !== undefined) push("kind", fields.kind);
   if (fields.from !== undefined) push("from_date", fields.from);
   if (fields.to !== undefined) push("to_date", fields.to);
   if (fields.replacements !== undefined) push("replacements", JSON.stringify(fields.replacements));
+  if (fields.note !== undefined) push("note", fields.note);
   if (fields.status !== undefined) push("status", fields.status);
   if (fields.reviewedBy !== undefined) push("reviewed_by", fields.reviewedBy);
   if (fields.reviewedAt !== undefined) push("reviewed_at", fields.reviewedAt);
@@ -132,4 +137,42 @@ export async function updateRequestFields(
 
 export async function deleteRequest(id: string): Promise<void> {
   await pool.query(`delete from requests where id = $1`, [id]);
+}
+
+interface ChangeRow {
+  id: string;
+  request_id: string;
+  action: RequestChange["action"];
+  changed_by: string;
+  changed_at: string;
+  reason: string;
+  before: RequestChange["before"];
+  after: RequestChange["after"];
+}
+
+export async function insertChange(c: RequestChange): Promise<void> {
+  await pool.query(
+    `insert into request_changes (id, request_id, action, changed_by, changed_at, reason, before, after)
+     values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [c.id, c.requestId, c.action, c.by, c.at, c.reason, JSON.stringify(c.before), c.after ? JSON.stringify(c.after) : null],
+  );
+}
+
+/** Geschiedenis van één aanvraag, oudste eerst. */
+export async function listChanges(requestId: string): Promise<RequestChange[]> {
+  const { rows } = await pool.query<ChangeRow>(
+    `select id, request_id, action, changed_by, changed_at, reason, before, after
+     from request_changes where request_id = $1 order by changed_at`,
+    [requestId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    requestId: r.request_id,
+    action: r.action,
+    by: r.changed_by as RequestChange["by"],
+    at: r.changed_at,
+    reason: r.reason,
+    before: r.before,
+    after: r.after,
+  }));
 }

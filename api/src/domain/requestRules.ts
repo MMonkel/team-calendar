@@ -1,6 +1,6 @@
 import {
   type AnyRequest, type DateKey, isPerson, isShortNotice, isValidKey,
-  ownShiftsInRange, type Person, type Replacements, shiftKey,
+  ownShiftsInRange, type Person, type Replacements, type RequestSnapshot, shiftKey,
 } from "shared";
 
 export class ValidationError extends Error {}
@@ -38,6 +38,14 @@ export function sanitizeReplacements(
     out[k] = v;
   }
   return out;
+}
+
+/** Zelfde inhoud? Vervangers vergelijken los van de volgorde van de sleutels. */
+export function sameSnapshot(a: RequestSnapshot, b: RequestSnapshot): boolean {
+  const norm = (s: RequestSnapshot) => JSON.stringify({
+    ...s, replacements: Object.fromEntries(Object.entries(s.replacements).sort()),
+  });
+  return norm(a) === norm(b);
 }
 
 export function computeShortNotice(from: DateKey): boolean {

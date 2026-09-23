@@ -2,18 +2,24 @@ import { Router } from "express";
 import { z } from "zod";
 import {
   type AbsenceRequest, type AnyRequest, isAdmin, isPerson,
-  type MoveRequest, ownShiftsInRange, type RevertRequest,
+  type MoveRequest, ownShiftsInRange, type RequestChange, type RevertRequest, snapshotOf,
 } from "shared";
 import { requireAdmin } from "../middleware/auth.js";
 import {
-  deleteRequest, getRequest, insertRequest, listRequests, updateRequestFields,
+  deleteRequest, getRequest, insertChange, insertRequest, listChanges, listRequests, updateRequestFields,
 } from "../db/requestsRepo.js";
-import { assertValidRange, cascadeForApproval, computeShortNotice, sanitizeReplacements, ValidationError } from "../domain/requestRules.js";
+import {
+  assertValidRange, cascadeForApproval, computeShortNotice, sameSnapshot, sanitizeReplacements, ValidationError,
+} from "../domain/requestRules.js";
 
 export const requestsRouter = Router();
 
 function newId(): string {
   return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function newChangeId(): string {
+  return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
 function handleValidation(res: import("express").Response, err: unknown): boolean {
@@ -165,6 +171,100 @@ requestsRouter.post("/:id/revert", async (req, res) => {
   res.status(201).json(revert);
 });
 
+const editSchema = z.object({
+  kind: z.enum(["day", "vacation"]),
+  from: z.string(),
+  to: z.string(),
+  note: z.string().max(2000).optional().default(""),
+  replacements: z.record(z.string()).optional().default({}),
+  reason: z.string().max(2000).optional().default(""),
+});
+
+/**
+ * PUT /api/requests/:id — alleen admins. Een vrije dag of vakantie direct
+ * aanpassen of verplaatsen, zonder nieuwe beoordeling. De toestand ervóór
+ * gaat de geschiedenis in.
+ */
+requestsRouter.put("/:id", requireAdmin, async (req, res) => {
+  try {
+    const target = await getRequest(String(req.params.id));
+    if (!target || target.type !== "absence") { res.status(404).json({ error: "not_found" }); return; }
+    if (target.status !== "draft" && target.status !== "approved") {
+      res.status(409).json({ error: "invalid_state", message: "Alleen concept- of definitieve aanvragen kun je aanpassen." });
+      return;
+    }
+    const body = editSchema.parse(req.body);
+    assertValidRange(body.from, body.to);
+    const fields = {
+      kind: body.kind,
+      from: body.from,
+      to: body.to,
+      replacements: sanitizeReplacements(target.person, body.from, body.to, body.replacements),
+      note: body.note.trim(),
+    };
+    const before = snapshotOf(target);
+    if (sameSnapshot(before, { ...before, ...fields })) {
+      res.status(400).json({ error: "invalid_argument", message: "Er is niets gewijzigd." });
+      return;
+    }
+    await updateRequestFields(target.id, fields);
+    const after = snapshotOf((await getRequest(target.id))!);
+    await insertChange({
+      id: newChangeId(), requestId: target.id, action: "edit", by: req.user!,
+      at: new Date().toISOString(), reason: body.reason.trim(), before, after,
+    });
+    res.json(await getRequest(target.id));
+  } catch (err) {
+    if (handleValidation(res, err)) return;
+    if (err instanceof z.ZodError) { res.status(400).json({ error: "invalid_argument", message: err.message }); return; }
+    throw err;
+  }
+});
+
+const removeSchema = z.object({ reason: z.string().max(2000).optional().default("") });
+
+/**
+ * POST /api/requests/:id/remove — alleen admins. Zet een vrije dag of vakantie
+ * op 'deleted': hij telt niet meer mee, maar blijft met geschiedenis zichtbaar.
+ * Openstaande verplaatsingen of terugzettingen ervan vervallen.
+ */
+requestsRouter.post("/:id/remove", requireAdmin, async (req, res) => {
+  const target = await getRequest(String(req.params.id));
+  if (!target || target.type !== "absence") { res.status(404).json({ error: "not_found" }); return; }
+  if (target.status !== "draft" && target.status !== "approved") {
+    res.status(409).json({ error: "invalid_state", message: "Deze aanvraag telt al niet meer mee." });
+    return;
+  }
+  const body = removeSchema.parse(req.body);
+  const by = req.user!;
+  const at = new Date().toISOString();
+  await updateRequestFields(target.id, { status: "deleted" });
+  await insertChange({
+    id: newChangeId(), requestId: target.id, action: "delete", by, at,
+    reason: body.reason.trim(), before: snapshotOf(target), after: null,
+  });
+  const pending = (await listRequests({ status: "draft" }))
+    .filter((r) => r.type !== "absence" && r.targetId === target.id);
+  for (const p of pending) {
+    await updateRequestFields(p.id, {
+      status: "rejected", reviewedBy: by, reviewedAt: at, comment: "De oorspronkelijke aanvraag is verwijderd.",
+    });
+  }
+  res.json(await getRequest(target.id));
+});
+
+/** GET /api/requests/:id/changes — geschiedenis van een aanvraag, oudste eerst. */
+requestsRouter.get("/:id/changes", async (req, res) => {
+  const target = await getRequest(String(req.params.id));
+  if (!target) { res.status(404).json({ error: "not_found" }); return; }
+  if (!isAdmin(req.user!) && target.person !== req.user) {
+    // Teamleden zien de geschiedenis van hun eigen aanvragen; die van anderen alleen via de kalender-details.
+    res.json([] satisfies RequestChange[]);
+    return;
+  }
+  res.json(await listChanges(target.id));
+});
+
 const decisionSchema = z.object({
   approve: z.boolean(),
   comment: z.string().max(2000).optional(),
@@ -195,7 +295,15 @@ requestsRouter.post("/:id/decision", requireAdmin, async (req, res) => {
   } else {
     const target = await getRequest((decision as AnyRequest & { targetId: string }).targetId);
     const cascade = cascadeForApproval(decision, target, reviewedBy, reviewedAt);
-    if (cascade && target) await updateRequestFields(target.id, cascade);
+    if (cascade && target) {
+      await updateRequestFields(target.id, cascade);
+      // Vastleggen hoe de oorspronkelijke aanvraag eruitzag vóór de verplaatsing of terugzetting.
+      await insertChange({
+        id: newChangeId(), requestId: target.id, action: decision.type === "move" ? "move" : "revert",
+        by: reviewedBy, at: reviewedAt, reason: decision.note, before: snapshotOf(target),
+        after: snapshotOf((await getRequest(target.id))!),
+      });
+    }
     await updateRequestFields(decision.id, { status: "approved", reviewedBy, reviewedAt });
   }
   res.json(await getRequest(decision.id));

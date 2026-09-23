@@ -1,19 +1,24 @@
 import { useState } from "react";
-import type { AnyRequest } from "shared";
+import type { AbsenceRequest, AnyRequest } from "shared";
 import { Dot, StatusPill, typeLabel } from "./Badges";
 import { fmtRange, fmtShort } from "../lib/format";
 import { PART_LABEL } from "shared";
 import { DetailModal } from "./DetailModal";
+import { adminCanChange } from "./AdminRequestModals";
 
 export function RequestsTable({
-  requests, showPerson, onWithdraw, onMove, onRevert,
+  requests, showPerson, onWithdraw, onMove, onRevert, onEdit, onRemove,
 }: {
   requests: AnyRequest[];
   showPerson: boolean;
   onWithdraw?: (r: AnyRequest) => void;
   onMove?: (r: AnyRequest) => void;
   onRevert?: (r: AnyRequest) => void;
+  /** Alleen admins: direct aanpassen/verplaatsen of verwijderen. */
+  onEdit?: (r: AbsenceRequest) => void;
+  onRemove?: (r: AbsenceRequest) => void;
 }) {
+  const hasActions = !!(onWithdraw || onMove || onRevert || onEdit || onRemove);
   const [open, setOpen] = useState<AnyRequest | null>(null);
   if (requests.length === 0) return <div className="empty">Niets gevonden.</div>;
   return (
@@ -26,7 +31,7 @@ export function RequestsTable({
               <th>Wanneer</th>
               <th>Status</th>
               <th>Vervangers</th>
-              {(onWithdraw || onMove || onRevert) && <th className="actcol"></th>}
+              {hasActions && <th className="actcol"></th>}
             </tr>
           </thead>
           <tbody>
@@ -40,7 +45,10 @@ export function RequestsTable({
                 <tr key={r.id} className="tappable" onClick={() => setOpen(r)}>
                   <td>
                     {typeLabel(r)}{" "}
-                    {r.shortNotice && (
+                    {!!r.changeCount && (
+                    <span className="tagline t-draft" title="Tik voor de oorspronkelijke aanvraag en de wijzigingen">gewijzigd</span>
+                  )}{" "}
+                  {r.shortNotice && (
                       <span className="tagline t-draft" title="Minder dan 3 maanden van tevoren aangevraagd">korte termijn</span>
                     )}
                     {showPerson && <div className="note"><Dot person={r.person} /> {r.person}</div>}
@@ -50,7 +58,7 @@ export function RequestsTable({
                   <td>
                     <StatusPill status={r.status} />
                     {r.comment && <div className="note">{r.comment}</div>}
-                    {r.reviewedBy && <div className="note">door {r.reviewedBy}</div>}
+                    {r.reviewedBy && <div className="note">beoordeeld door {r.reviewedBy}</div>}
                   </td>
                   <td>
                     {reps.length === 0
@@ -60,7 +68,7 @@ export function RequestsTable({
                           return <div className="note" key={sk}>{fmtShort(k)} {PART_LABEL[part as "am" | "pm" | "day"].toLowerCase()} → {p}</div>;
                         })}
                   </td>
-                  {(onWithdraw || onMove || onRevert) && (
+                  {hasActions && (
                     <td className="actcol" onClick={(e) => e.stopPropagation()}>
                       <div className="rowactions">
                         {onWithdraw && r.status === "draft" && (
@@ -72,6 +80,12 @@ export function RequestsTable({
                         {onRevert && canAct && (
                           <button className="btn small" onClick={() => onRevert(r)}>Terugzetten</button>
                         )}
+                        {onEdit && r.type === "absence" && adminCanChange(r) && (
+                          <button className="btn small" onClick={() => onEdit(r)}>Aanpassen</button>
+                        )}
+                        {onRemove && r.type === "absence" && adminCanChange(r) && (
+                          <button className="btn small" onClick={() => onRemove(r)}>Verwijderen</button>
+                        )}
                       </div>
                     </td>
                   )}
@@ -81,7 +95,14 @@ export function RequestsTable({
           </tbody>
         </table>
       </div>
-      {open && <DetailModal detail={{ kind: "request", request: open }} onClose={() => setOpen(null)} />}
+      {open && (
+        <DetailModal
+          detail={{ kind: "request", request: open }}
+          onClose={() => setOpen(null)}
+          onEditRequest={onEdit && ((r) => { setOpen(null); onEdit(r); })}
+          onRemoveRequest={onRemove && ((r) => { setOpen(null); onRemove(r); })}
+        />
+      )}
     </>
   );
 }

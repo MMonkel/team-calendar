@@ -15,6 +15,7 @@ const STATUS_META: Record<RequestStatus, [string, string]> = {
   approved: ["p-approved", "Definitief"],
   rejected: ["p-rejected", "Afgekeurd"],
   cancelled: ["p-cancelled", "Teruggezet"],
+  deleted: ["p-deleted", "Verwijderd"],
 };
 
 export function StatusPill({ status }: { status: RequestStatus }) {

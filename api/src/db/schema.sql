@@ -22,6 +22,26 @@ create table if not exists requests (
 );
 
 create index if not exists requests_person_idx on requests (person);
+
+-- Status 'deleted' (door een admin verwijderd) toegevoegd na de eerste versie.
+alter table requests drop constraint if exists requests_status_check;
+alter table requests add constraint requests_status_check
+  check (status in ('draft', 'approved', 'rejected', 'cancelled', 'deleted'));
+
+-- Geschiedenis per aanvraag: hoe hij eruitzag vóór (en na) elke wijziging,
+-- zodat de oorspronkelijke aanvraag altijd terug te zien is.
+create table if not exists request_changes (
+  id          text primary key,
+  request_id  text not null references requests(id) on delete cascade,
+  action      text not null check (action in ('edit', 'delete', 'move', 'revert')),
+  changed_by  text not null,
+  changed_at  timestamptz not null default now(),
+  reason      text not null default '',
+  before      jsonb not null,
+  after       jsonb
+);
+
+create index if not exists request_changes_request_idx on request_changes (request_id, changed_at);
 create index if not exists requests_status_idx on requests (status);
 create index if not exists requests_range_idx on requests (from_date, to_date);
 
