@@ -51,9 +51,10 @@ function slotContent(slot: Slot): [string, JSX.Element] {
       <span className="tagline t-empty">geen vervanger</span>
     </>];
   }
+  // Zelfde volgorde als zonder vervanger: eerst wie er niet is, dan wie het overneemt.
   return ["slot replaced", <>
+    <span className="was">{slot.original}</span>
     <Dot person={slot.actual} />
     <span className="nm">{slot.actual}</span>
-    <span className="was">{slot.original}</span>
   </>];
 }
