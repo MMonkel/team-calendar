@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import type { AnyRequest } from "shared";
 import { api, ApiError } from "../lib/api";
 import { RequestsTable } from "../components/RequestsTable";
+import { PrintButton, PrintHeader } from "../components/Print";
+
+const FILTER_LABEL: Record<Filter, string> = {
+  alle: "alle statussen", draft: "concept", approved: "definitief", rejected: "afgekeurd", cancelled: "teruggezet",
+};
 
 type Filter = "alle" | "draft" | "approved" | "rejected" | "cancelled";
 
@@ -20,6 +25,7 @@ export function AllRequestsPage({ refreshSignal = 0 }: { refreshSignal?: number 
 
   return (
     <>
+      <PrintHeader title="Alle aanvragen" sub={`Filter: ${FILTER_LABEL[filter]}`} />
       <div className="periodbar">
         <h2>Alle aanvragen</h2>
         <div className="spacer" />
@@ -30,6 +36,7 @@ export function AllRequestsPage({ refreshSignal = 0 }: { refreshSignal?: number 
           <option value="rejected">Afgekeurd</option>
           <option value="cancelled">Teruggezet</option>
         </select>
+        <PrintButton />
       </div>
       {error && <div className="errorbar">{error}</div>}
       <div className="card">

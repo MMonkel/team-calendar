@@ -5,6 +5,7 @@ import { api, ApiError } from "../lib/api";
 import { fmtShort } from "../lib/format";
 import { Dot, StatusPill } from "../components/Badges";
 import { RequestsTable } from "../components/RequestsTable";
+import { PrintButton, PrintHeader } from "../components/Print";
 import { MoveRequestModal } from "../components/MoveRequestModal";
 import { RevertRequestModal } from "../components/RevertRequestModal";
 
@@ -48,6 +49,7 @@ export function MyOverviewPage({ me, refreshSignal = 0 }: { me: Person; refreshS
 
   return (
     <>
+      <PrintHeader title={`Overzicht ${me} — ${year}`} />
       <div className="periodbar">
         <h2>Mijn overzicht</h2>
         <div className="spacer" />
@@ -55,6 +57,7 @@ export function MyOverviewPage({ me, refreshSignal = 0 }: { me: Person; refreshS
         <select id="yearSel" value={year} onChange={(e) => setYear(Number(e.target.value))} style={{ width: "auto" }}>
           {years.map((y) => <option key={y} value={y}>{y}</option>)}
         </select>
+        <PrintButton />
       </div>
 
       {error && <div className="errorbar">{error}</div>}

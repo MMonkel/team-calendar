@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { addDays, addMonths, startOfWeek, toKey, todayKey, type DateKey } from "shared";
 import { api, type DayRoster } from "../lib/api";
-import { fmtRange, MONTHS, weekNumber } from "../lib/format";
+import { fmtLong, fmtRange, MONTHS, weekNumber } from "../lib/format";
 import { WeekView } from "../components/WeekView";
 import { MonthView } from "../components/MonthView";
 import { DayView, relatedRequests } from "../components/DayView";
+import { PrintButton, PrintHeader } from "../components/Print";
 
 type Mode = "day" | "week" | "month";
 
@@ -64,6 +65,11 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
 
   return (
     <>
+      <PrintHeader
+        title={`Rooster — ${mode === "day" ? fmtLong(toKey(cursor)) : title}`}
+        sub={{ day: "Dagoverzicht", week: "Weekoverzicht", month: "Maandoverzicht" }[mode]}
+        landscape={mode !== "day"}
+      />
       <div className="periodbar">
         <div className="nav">
           <button className="btn" aria-label="Vorige" onClick={() => step(-1)}>‹</button>
@@ -79,6 +85,7 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
             </button>
           ))}
         </div>
+        <PrintButton label={{ day: "Print dag", week: "Print week", month: "Print maand" }[mode]} />
       </div>
 
       {error && <div className="errorbar">{error}</div>}

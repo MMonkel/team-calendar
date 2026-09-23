@@ -4,6 +4,7 @@ import { api, ApiError } from "../lib/api";
 import { fmtRange, fmtShort } from "../lib/format";
 import { Dot } from "../components/Badges";
 import { RejectModal } from "../components/RejectModal";
+import { PrintButton, PrintHeader } from "../components/Print";
 
 export function ReviewPage({
   onCountChange, refreshSignal = 0,
@@ -37,7 +38,11 @@ export function ReviewPage({
 
   return (
     <>
-      <div className="periodbar"><h2>Te beoordelen</h2></div>
+      <PrintHeader
+        title="Te beoordelen"
+        sub={`${drafts.length} openstaande ${drafts.length === 1 ? "aanvraag" : "aanvragen"}`}
+      />
+      <div className="periodbar"><h2>Te beoordelen</h2><div className="spacer" /><PrintButton /></div>
       {error && <div className="errorbar">{error}</div>}
       {drafts.length === 0 ? (
         <div className="card"><div className="empty">Geen openstaande aanvragen.</div></div>

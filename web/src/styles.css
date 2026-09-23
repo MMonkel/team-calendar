@@ -148,3 +148,41 @@ html,body{overscroll-behavior-y:none;}
 .ptr-icon.spin{animation:ptr-spin .8s linear infinite;}
 @keyframes ptr-spin{to{transform:rotate(360deg);}}
 @media (prefers-reduced-motion: reduce){ .ptr-icon.spin{animation:none;} }
+
+/* Printen */
+.printhead{display:none;}
+.printbtn{display:inline-flex; align-items:center; gap:.35rem;}
+.printbtn svg{width:1em; height:1em;}
+@media print{
+  :root{
+    --paper:#ffffff; --panel:#ffffff; --ink:#111111; --muted:#555555;
+    --line:#cfcfcf; --line-strong:#999999;
+    --ok:#2f6b4c; --ok-bg:#e6f0e9;
+    --draft:#8a5a10; --draft-bg:#f7eeda;
+    --bad:#9c3626; --bad-bg:#f6e3df;
+    --weekend:#35577f; --weekend-bg:#eef2f7;
+    --empty-bg:#f1e9e7; --empty:#8d4a3c;
+    --activity:#5b3f8f; --activity-bg:#eee8f6;
+    color-scheme:light;
+  }
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  body{background:#fff; font-size:10.5pt;}
+  .topbar,.tabs,.ptr,.periodbar,.overlay,.btn,.rowactions,.actcol,.errorbar{display:none !important;}
+  main{max-width:none; padding:0;}
+  .printhead{display:block; margin-bottom:10pt; padding-bottom:6pt; border-bottom:1.5pt solid #111;}
+  .printhead h1{font-family:Iowan Old Style,"Palatino Linotype",Palatino,Georgia,serif; font-size:17pt; font-weight:600;}
+  .printhead .meta{font-size:8.5pt; color:#555; margin-top:2pt;}
+  .tablewrap{overflow:visible;}
+  thead{display:table-header-group;}
+  tr,.block,.mcell,.shiftrow,.activityrow{break-inside:avoid;}
+  .card{border-color:#cfcfcf; border-radius:6px; padding:8pt 10pt; margin-bottom:8pt;}
+  .weekgrid{grid-template-columns:repeat(7,minmax(0,1fr)) !important; gap:4pt;}
+  .daycol{flex-direction:column !important;}
+  .daycol .dayhead{width:auto !important; flex-direction:row !important; align-items:baseline !important; padding:0 2pt;}
+  .block{min-height:0; padding:4pt 5pt; border-radius:5px;}
+  .slot{font-size:9pt;}
+  .monthgrid{gap:3pt;}
+  .mcell{min-height:0; padding:3pt; border-radius:5px;}
+  .mini{font-size:7.5pt;}
+  .dayhead.today .dd,.mcell.istoday .d{background:none; color:inherit; text-decoration:underline;}
+}

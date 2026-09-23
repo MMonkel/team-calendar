@@ -22,7 +22,7 @@ export function RequestsTable({
             <th>Wanneer</th>
             <th>Status</th>
             <th>Vervangers</th>
-            {(onWithdraw || onMove || onRevert) && <th></th>}
+            {(onWithdraw || onMove || onRevert) && <th className="actcol"></th>}
           </tr>
         </thead>
         <tbody>
@@ -57,7 +57,7 @@ export function RequestsTable({
                   {r.note && <div className="note">“{r.note}”</div>}
                 </td>
                 {(onWithdraw || onMove || onRevert) && (
-                  <td>
+                  <td className="actcol">
                     <div className="rowactions">
                       {onWithdraw && r.status === "draft" && (
                         <button className="btn small" onClick={() => onWithdraw(r)}>Intrekken</button>
