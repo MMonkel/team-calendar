@@ -5,18 +5,20 @@ import type { DayRoster } from "../lib/api";
 import { SlotView, visibleShifts } from "./SlotView";
 import { Dot, StatusPill, typeLabel } from "./Badges";
 import { ActivityModal } from "./ActivityModal";
+import type { Detail } from "./DetailModal";
 import { api, ApiError } from "../lib/api";
 
 const PART_LABEL: Record<string, string> = { am: "Ochtend", pm: "Middag", day: "Hele dag" };
 
 export function DayView({
-  day, related, admin, showRoster, onChanged,
+  day, related, admin, showRoster, onChanged, onOpenDetail,
 }: {
   day: DayRoster;
   showRoster: boolean;
   related: AnyRequest[];
   admin: boolean;
   onChanged: () => void;
+  onOpenDetail: (d: Detail) => void;
 }) {
   const isWeekendLike = day.shifts.length === 1 && day.shifts[0].part === "day";
   const shifts = visibleShifts(day, showRoster);
@@ -66,7 +68,7 @@ export function DayView({
         {shifts.map((sh) => (
           <div className="shiftrow" key={sh.part}>
             <div className="lab">{PART_LABEL[sh.part]}</div>
-            <div className="people">{sh.slots.map((s, i) => <SlotView slot={s} key={i} />)}</div>
+            <div className="people">{sh.slots.map((s, i) => <SlotView slot={s} key={i} onOpen={(r) => onOpenDetail({ kind: "request", request: r })} />)}</div>
           </div>
         ))}
       </div>
@@ -78,8 +80,11 @@ export function DayView({
             <table>
               <tbody>
                 {related.map((r) => (
-                  <tr key={r.id}>
-                    <td><Dot person={r.person} /> {r.person}</td>
+                  <tr key={r.id} className="tappable" onClick={() => onOpenDetail({ kind: "request", request: r })}>
+                    <td>
+                      <Dot person={r.person} /> {r.person}
+                      {r.note && <div className="note prewrap">“{r.note}”</div>}
+                    </td>
                     <td>{typeLabel(r)}</td>
                     <td className="num">{fmtRange(r.from, r.to)}</td>
                     <td><StatusPill status={r.status} /></td>

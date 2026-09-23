@@ -6,6 +6,7 @@ import { WeekView } from "../components/WeekView";
 import { MonthView } from "../components/MonthView";
 import { DayView, relatedRequests } from "../components/DayView";
 import { PrintButton, PrintHeader } from "../components/Print";
+import { type Detail, DetailModal } from "../components/DetailModal";
 
 type Mode = "day" | "week" | "month";
 
@@ -15,6 +16,7 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
   const [days, setDays] = useState<DayRoster[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const [detail, setDetail] = useState<Detail | null>(null);
   const [showRoster, setShowRoster] = useState(() => {
     try { return localStorage.getItem("teams.showRoster") === "1"; } catch { return false; }
   });
@@ -102,9 +104,9 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
       {error && <div className="errorbar">{error}</div>}
       {!days && !error && <div className="empty">Bezig met laden…</div>}
 
-      {days && mode === "week" && <WeekView days={days} today={today} showRoster={showRoster} onOpenDay={openDay} />}
+      {days && mode === "week" && <WeekView days={days} today={today} showRoster={showRoster} onOpenDay={openDay} onOpenDetail={setDetail} />}
       {days && mode === "month" && (
-        <MonthView days={days} month={cursor.getMonth()} today={today} showRoster={showRoster} onOpenDay={openDay} />
+        <MonthView days={days} month={cursor.getMonth()} today={today} showRoster={showRoster} onOpenDay={openDay} onOpenDetail={setDetail} />
       )}
       {days && mode === "day" && days[0] && (
         <DayView
@@ -112,9 +114,11 @@ export function CalendarPage({ admin, refreshSignal = 0 }: { admin: boolean; ref
           related={relatedRequests(days[0])}
           admin={admin}
           showRoster={showRoster}
+          onOpenDetail={setDetail}
           onChanged={() => setReload((n) => n + 1)}
         />
       )}
+      {detail && <DetailModal detail={detail} onClose={() => setDetail(null)} />}
     </>
   );
 }

@@ -15,39 +15,45 @@ export function visibleShifts(day: DayRoster, showRoster: boolean): DayRoster["s
     .filter((sh) => sh.slots.length > 0);
 }
 
-export function SlotView({ slot }: { slot: Slot }) {
-  if (slot.state === "normal") {
+type SlotRequest = NonNullable<Slot["request"]>;
+
+/** Een afwijking (vrij, gewisseld, aanvraag) is aan te tikken voor de details. */
+export function SlotView({ slot, onOpen }: { slot: Slot; onOpen?: (r: SlotRequest) => void }) {
+  const [cls, content] = slotContent(slot);
+  if (slot.state !== "normal" && slot.request && onOpen) {
+    const r = slot.request;
     return (
-      <div className="slot">
-        <Dot person={slot.actual as Person} />
-        <span className="nm">{slot.actual}</span>
-      </div>
+      <button type="button" className={cls + " tappable"} onClick={() => onOpen(r)}>{content}</button>
     );
   }
+  return <div className={cls}>{content}</div>;
+}
+
+function slotContent(slot: Slot): [string, JSX.Element] {
+  if (slot.state === "normal") {
+    return ["slot", <>
+      <Dot person={slot.actual as Person} />
+      <span className="nm">{slot.actual}</span>
+    </>];
+  }
   if (slot.state === "pending") {
-    return (
-      <div className="slot pending">
-        <Dot person={slot.original} />
-        <span className="nm">{slot.original}</span>
-        <span className="tagline t-draft">aanvraag</span>
-        {slot.actual && <span className="nm note">→ {slot.actual}</span>}
-      </div>
-    );
+    return ["slot pending", <>
+      <Dot person={slot.original} />
+      <span className="nm">{slot.original}</span>
+      <span className="tagline t-draft">aanvraag</span>
+      {slot.actual && <span className="nm note">→ {slot.actual}</span>}
+    </>];
   }
   // state === "away": goedgekeurd, dus vervangen (of open)
   if (!slot.actual) {
-    return (
-      <div className="slot replaced">
-        <span className="was">{slot.original}</span>
-        <span className="tagline t-empty">geen vervanger</span>
-      </div>
-    );
-  }
-  return (
-    <div className="slot replaced">
-      <Dot person={slot.actual} />
-      <span className="nm">{slot.actual}</span>
+    return ["slot replaced", <>
       <span className="was">{slot.original}</span>
-    </div>
-  );
+      <span className="tagline t-empty">geen vervanger</span>
+    </>];
+  }
+  return ["slot replaced", <>
+    <Dot person={slot.actual} />
+    <span className="nm">{slot.actual}</span>
+    <span className="was">{slot.original}</span>
+  </>];
 }

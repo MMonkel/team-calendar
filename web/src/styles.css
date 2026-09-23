@@ -118,6 +118,17 @@ td.num{font-variant-numeric:tabular-nums; white-space:nowrap;}
 .warn b{display:block;}
 .rowactions{display:flex; gap:.35rem; flex-wrap:wrap;}
 .note{color:var(--muted); font-size:.83rem;}
+/* Aantikbaar voor details (afwijking, activiteit, aanvraag) */
+button.slot,button.mini{border:0; background:none; padding:0; width:100%; text-align:left; color:inherit; font:inherit; cursor:pointer;}
+button.mini{font-size:.72rem;}
+button.activity{border:0; width:100%; text-align:left; font-family:inherit; cursor:pointer; display:block;}
+.tappable{cursor:pointer; -webkit-tap-highlight-color:rgba(0,0,0,.08);}
+button.tappable:hover .nm,button.activity:hover{text-decoration:underline;}
+tr.tappable:hover td{background:var(--paper);}
+.prewrap{white-space:pre-wrap;}
+.details{display:grid; grid-template-columns:auto 1fr; gap:.45rem 1rem; margin:.9rem 0 0;}
+.details dt{color:var(--muted); font-size:.85rem; padding-top:.1rem;}
+.details dd{margin:0; min-width:0; overflow-wrap:anywhere;}
 .errorbar{background:var(--bad-bg); color:var(--bad); padding:.5rem .8rem; border-radius:8px; margin-bottom:.8rem; font-size:.88rem;}
 
 .overlay{position:fixed; inset:0; background:rgba(10,14,12,.45); z-index:50; display:flex; align-items:flex-start; justify-content:center; padding:1rem; overflow:auto;}
