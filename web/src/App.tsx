@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { isAdmin } from "shared";
 import { useSession } from "./lib/useSession";
 import { api } from "./lib/api";
+import { useActivityNotices } from "./lib/useActivityNotices";
+import { ActivityNoticesModal } from "./components/ActivityNoticesModal";
 import { TopBar } from "./components/TopBar";
 import { Tabs, type TabId } from "./components/Tabs";
 import { NewRequestModal } from "./components/NewRequestModal";
@@ -41,6 +43,10 @@ export default function App() {
     };
   }, [admin, me, refreshSignal]);
 
+  // Medewerkers: belletje voor activiteiten op hun eigen werkdagen.
+  const notices = useActivityNotices(me, !admin, refreshSignal);
+  const [showNotices, setShowNotices] = useState(false);
+
   function changeMe(p: typeof me) {
     setMe(p);
     if (!isAdmin(p) && (tab === "beoordelen" || tab === "alle")) setTab("kalender");
@@ -53,8 +59,9 @@ export default function App() {
         me={me}
         onChangeMe={changeMe}
         onNewRequest={() => setShowNewRequest(true)}
-        openCount={openCount}
-        onOpenReview={() => setTab("beoordelen")}
+        bellCount={admin ? openCount : notices.unseen.length}
+        bellLabel={admin ? "Te beoordelen" : "Activiteiten op je werkdagen"}
+        onBell={() => (admin ? setTab("beoordelen") : setShowNotices(true))}
       />
       <Tabs tab={tab} onChange={setTab} admin={admin} openCount={openCount} />
       <main>
@@ -63,6 +70,14 @@ export default function App() {
         {tab === "beoordelen" && admin && <ReviewPage onCountChange={setOpenCount} refreshSignal={refreshSignal} />}
         {tab === "alle" && admin && <AllRequestsPage refreshSignal={refreshSignal} />}
       </main>
+
+      {showNotices && !admin && (
+        <ActivityNoticesModal
+          activities={notices.activities}
+          isNew={notices.isNew}
+          onClose={() => { notices.markAllSeen(); setShowNotices(false); }}
+        />
+      )}
 
       {showNewRequest && (
         <NewRequestModal
