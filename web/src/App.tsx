@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { isAdmin } from "shared";
 import { useSession } from "./lib/useSession";
+import { api } from "./lib/api";
 import { TopBar } from "./components/TopBar";
 import { Tabs, type TabId } from "./components/Tabs";
 import { NewRequestModal } from "./components/NewRequestModal";
@@ -19,6 +20,27 @@ export default function App() {
   const [refreshSignal, setRefreshSignal] = useState(0);
   const refresh = useCallback(() => setRefreshSignal((n) => n + 1), []);
 
+  // Aantal openstaande aanvragen voor het belletje: bij laden, bij verversen,
+  // elke minuut en zodra de app weer in beeld komt.
+  useEffect(() => {
+    if (!admin) { setOpenCount(0); return; }
+    let alive = true;
+    const load = () => {
+      api.requests({ status: "draft" })
+        .then((rows) => { if (alive) setOpenCount(rows.length); })
+        .catch(() => {});
+    };
+    load();
+    const timer = setInterval(load, 60_000);
+    const onVisible = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [admin, me, refreshSignal]);
+
   function changeMe(p: typeof me) {
     setMe(p);
     if (!isAdmin(p) && (tab === "beoordelen" || tab === "alle")) setTab("kalender");
@@ -27,7 +49,13 @@ export default function App() {
   return (
     <>
       <PullToRefresh onRefresh={refresh} />
-      <TopBar me={me} onChangeMe={changeMe} onNewRequest={() => setShowNewRequest(true)} />
+      <TopBar
+        me={me}
+        onChangeMe={changeMe}
+        onNewRequest={() => setShowNewRequest(true)}
+        openCount={openCount}
+        onOpenReview={() => setTab("beoordelen")}
+      />
       <Tabs tab={tab} onChange={setTab} admin={admin} openCount={openCount} />
       <main>
         {tab === "kalender" && <CalendarPage admin={admin} refreshSignal={refreshSignal} />}

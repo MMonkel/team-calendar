@@ -41,6 +41,9 @@ button{font:inherit; color:inherit;}
 .modal.about{width:min(20rem,100%); text-align:center;}
 .modal.about h3{font-family:Iowan Old Style,"Palatino Linotype",Palatino,Georgia,serif; font-size:1.5rem;}
 .modal.about .modalactions{justify-content:center;}
+.bell{position:relative; display:inline-flex; align-items:center; justify-content:center; width:2.3rem; height:2.3rem; border:0; border-radius:999px; background:none; color:var(--ink); cursor:pointer;}
+.bell:hover{background:var(--paper);}
+.bellcount{position:absolute; top:.05rem; right:-.05rem; min-width:1.15rem; height:1.15rem; padding:0 .3rem; border-radius:999px; background:var(--bad); color:var(--panel); font-size:.7rem; font-weight:700; line-height:1.15rem; text-align:center;}
 .who{display:flex; align-items:center; gap:.45rem; font-size:.9rem;}
 .who select{font:inherit; padding:.32rem .5rem; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--ink);}
 

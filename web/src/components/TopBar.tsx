@@ -3,11 +3,13 @@ import { ADMINS, isAdmin, PEOPLE, type Person } from "shared";
 import { APP_VERSION } from "../lib/version";
 
 export function TopBar({
-  me, onChangeMe, onNewRequest,
+  me, onChangeMe, onNewRequest, openCount, onOpenReview,
 }: {
   me: Person;
   onChangeMe: (p: Person) => void;
   onNewRequest: () => void;
+  openCount: number;
+  onOpenReview: () => void;
 }) {
   const [about, setAbout] = useState(false);
   return (
@@ -21,6 +23,21 @@ export function TopBar({
           <div className="brand"><b>Team S</b><span>planning</span></div>
         )}
         <div className="spacer" />
+        {isAdmin(me) && (
+          <button
+            type="button"
+            className="bell"
+            onClick={onOpenReview}
+            aria-label={openCount === 1 ? "1 nieuwe aanvraag" : `${openCount} nieuwe aanvragen`}
+            title="Te beoordelen"
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path d="M12 3a6 6 0 0 0-6 6v3.6l-1.7 2.9A1 1 0 0 0 5.2 17h13.6a1 1 0 0 0 .9-1.5L18 12.6V9a6 6 0 0 0-6-6Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              <path d="M9.5 19.5a2.5 2.5 0 0 0 5 0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            {openCount > 0 && <span className="bellcount">{openCount > 99 ? "99+" : openCount}</span>}
+          </button>
+        )}
         <div className="who">
           <label htmlFor="whoami">Ik ben</label>
           <select id="whoami" value={me} onChange={(e) => onChangeMe(e.target.value as Person)}>
