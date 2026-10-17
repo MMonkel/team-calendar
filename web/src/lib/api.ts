@@ -38,16 +38,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      // Hiermee geeft Container Apps-auth bij een verlopen sessie een 401
-      // terug in plaats van een redirect naar de loginpagina.
+      // Hiermee geeft Container Apps-auth bij een verlopen sessie een kale
+      // 403 terug in plaats van een redirect naar de loginpagina.
       "X-Requested-With": "XMLHttpRequest",
       ...(currentUser ? { "x-user": currentUser } : {}),
       ...(init?.headers ?? {}),
     },
   });
-  if (res.status === 401 && !path.startsWith("/me")) reloginOnce();
   if (res.status === 204) return undefined as T;
   const body = await res.json().catch(() => ({}));
+  // Een 401, of een 403 zonder foutcode (die komt van Container Apps-auth, niet
+  // van onze API): de sessie is verlopen en de gebruiker moet opnieuw inloggen.
+  if (res.status === 401 || (res.status === 403 && !body.error)) {
+    if (!path.startsWith("/me")) reloginOnce();
+    throw new ApiError(res.status, "login_required", "Je bent niet (meer) ingelogd.");
+  }
   if (!res.ok) {
     throw new ApiError(res.status, body.error ?? "unknown", body.message ?? res.statusText);
   }

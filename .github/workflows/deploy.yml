@@ -6,6 +6,13 @@ on:
     paths-ignore: ["infra/**", "docs/**", "**.md"]
   workflow_dispatch:
 
+# Infra en Deploy nooit tegelijk: een infra-apply schrijft de hele Container
+# App terug zoals die bij het plannen was, en zou een image dat Deploy
+# intussen heeft uitgerold weer terugzetten.
+concurrency:
+  group: azure-dev
+  cancel-in-progress: false
+
 permissions:
   id-token: write
   contents: read

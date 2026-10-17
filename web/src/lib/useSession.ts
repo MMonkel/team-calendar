@@ -39,7 +39,7 @@ export function useSession(): Session {
       .catch((e: unknown) => {
         if (e instanceof ApiError && e.code === "not_in_team") {
           setState({ status: "not_in_team", message: e.message });
-        } else if (e instanceof ApiError && e.status === 401) {
+        } else if (e instanceof ApiError && e.code === "login_required") {
           reloginOnce();
           setState({ status: "error", message: "Je bent niet ingelogd." });
         } else {
