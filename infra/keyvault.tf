@@ -20,16 +20,22 @@ resource "azurerm_key_vault" "main" {
   tags = local.tags
 }
 
-# Wie 'terraform apply' draait (de federated GitHub Actions-identity) moet
-# zelf ook de secret mogen schrijven — Contributor op de subscription dekt
-# alleen het beheervlak van de Key Vault, niet de databewerkingen op de
-# secrets zelf onder RBAC-autorisatie.
-resource "azurerm_role_assignment" "deployer_kv_secrets_officer" {
+# Wie 'terraform apply' draait moet zelf ook de secret mogen lezen en schrijven:
+# Contributor op de subscription dekt alleen het beheervlak van de Key Vault,
+# niet de databewerkingen op de secrets onder RBAC-autorisatie. Dat geldt voor
+# zowel de GitHub Actions-identity als iemand die lokaal een apply draait, dus
+# beide staan hier vast in plaats van alleen "wie nu draait" (dan haalt elke
+# apply de rechten van de ander weg en faalt de volgende plan op een 403).
+resource "azurerm_role_assignment" "kv_secrets_officer" {
+  for_each             = var.kv_secrets_officers
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = each.value
+}
 
-  depends_on = [azurerm_key_vault.main]
+moved {
+  from = azurerm_role_assignment.deployer_kv_secrets_officer
+  to   = azurerm_role_assignment.kv_secrets_officer["marc"]
 }
 
 # De Container App leest de secret via zijn managed identity, alleen om te lezen.
@@ -44,5 +50,5 @@ resource "azurerm_key_vault_secret" "database_url" {
   key_vault_id = azurerm_key_vault.main.id
   value        = "postgres://${azurerm_postgresql_flexible_server.main.administrator_login}:${urlencode(random_password.postgres_admin.result)}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${azurerm_postgresql_flexible_server_database.app.name}?sslmode=require"
 
-  depends_on = [azurerm_role_assignment.deployer_kv_secrets_officer]
+  depends_on = [azurerm_role_assignment.kv_secrets_officer]
 }

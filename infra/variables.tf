@@ -62,3 +62,12 @@ variable "custom_domain" {
   type        = string
   default     = "teams.monkel.com"
 }
+
+variable "kv_secrets_officers" {
+  description = "Object-ID's die de secrets in Key Vault mogen beheren: iedereen die terraform apply draait, lokaal of via GitHub Actions."
+  type        = map(string)
+  default = {
+    marc   = "f6815a38-b7dc-42f0-ab14-c58152abf711"
+    github = "d00b41be-3620-4c78-98df-f161dacbc843"
+  }
+}
