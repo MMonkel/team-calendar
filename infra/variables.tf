@@ -56,3 +56,9 @@ variable "postgres_version" {
   type        = string
   default     = "16"
 }
+
+variable "custom_domain" {
+  description = "Eigen hostnaam voor de app, bijvoorbeeld teams.monkel.com. Leeg laten voor alleen de standaard azurecontainerapps.io-URL. De CNAME en de TXT-record asuid.<hostnaam> moeten al in DNS staan voordat je dit zet."
+  type        = string
+  default     = "teams.monkel.com"
+}

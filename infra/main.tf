@@ -151,3 +151,18 @@ resource "azurerm_container_app" "main" {
 
   depends_on = [azurerm_role_assignment.acr_pull, azurerm_role_assignment.app_kv_secrets_user, azurerm_key_vault_secret.database_url]
 }
+
+# Eigen domein op de Container App. Terraform voegt alleen de hostnaam toe;
+# het gratis managed certificaat koppel je daarna met
+# `az containerapp hostname bind` (de azurerm-provider kan dat nog niet zelf).
+# Daarom negeert Terraform de certificaatvelden, anders haalt de volgende apply
+# de koppeling weer weg.
+resource "azurerm_container_app_custom_domain" "main" {
+  count            = var.custom_domain == "" ? 0 : 1
+  name             = var.custom_domain
+  container_app_id = azurerm_container_app.main.id
+
+  lifecycle {
+    ignore_changes = [certificate_binding_type, container_app_environment_certificate_id]
+  }
+}

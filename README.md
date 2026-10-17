@@ -75,6 +75,25 @@ Wijzigingen in `infra/` gaan via de Infra-workflow: op een PR zie je het plan, n
 merge wordt het toegepast. Terraform negeert bewust het `image`-veld van de
 Container App, zodat een infra-apply een lopende deploy niet terugdraait.
 
+## Eigen domein
+
+De app draait op `teams.monkel.com` (variabele `custom_domain` in
+`infra/variables.tf`). De DNS van monkel.com staat bij ZoneEdit, dus de records
+zet je daar met de hand:
+
+* `CNAME teams` → output `custom_domain_cname_target`
+* `TXT asuid.teams` → output `custom_domain_verification_id`
+
+De records moeten bestaan vóór de apply, anders weigert Azure de hostnaam.
+Terraform voegt alleen de hostnaam toe. Het gratis managed certificaat koppel je
+daarna één keer zelf, en Azure verlengt het daarna automatisch:
+
+```
+az containerapp hostname bind --hostname teams.monkel.com \
+  --name ca-starter-dev --resource-group rg-starter-dev \
+  --environment cae-starter-dev --validation-method CNAME
+```
+
 ## Login: nu een placeholder, straks Entra ID
 
 De app vraagt nu bij elk verzoek wie je bent via een header (`x-user`) die de
@@ -115,7 +134,7 @@ in de orde van een paar tientjes per maand voor een team van deze omvang.
 
 - Entra ID-login aansluiten (zie hierboven) â€” dit is de belangrijkste voor een
   echte uitrol.
-- Eigen domein en certificaat op de Container App.
+- Managed certificaat koppelen aan `teams.monkel.com` (zie "Eigen domein").
 - Een tweede omgeving: `terraform workspace` of een aparte tfvars per omgeving,
   met een `prod`-environment in GitHub die een reviewer vereist.
 - E-mailnotificatie naar Alexandra/Marc bij een nieuwe aanvraag, en naar de

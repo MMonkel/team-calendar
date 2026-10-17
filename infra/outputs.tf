@@ -21,3 +21,13 @@ output "postgres_server_fqdn" {
 output "key_vault_name" {
   value = azurerm_key_vault.main.name
 }
+
+output "custom_domain_verification_id" {
+  description = "Waarde voor de TXT-record asuid.<eigen domein>."
+  value       = azurerm_container_app_environment.main.custom_domain_verification_id
+}
+
+output "custom_domain_cname_target" {
+  description = "Waar de CNAME van het eigen domein naar moet wijzen."
+  value       = azurerm_container_app.main.ingress[0].fqdn
+}
