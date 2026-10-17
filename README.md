@@ -134,7 +134,6 @@ in de orde van een paar tientjes per maand voor een team van deze omvang.
 
 - Entra ID-login aansluiten (zie hierboven) â€” dit is de belangrijkste voor een
   echte uitrol.
-- Managed certificaat koppelen aan `teams.monkel.com` (zie "Eigen domein").
 - Een tweede omgeving: `terraform workspace` of een aparte tfvars per omgeving,
   met een `prod`-environment in GitHub die een reviewer vereist.
 - E-mailnotificatie naar Alexandra/Marc bij een nieuwe aanvraag, en naar de
