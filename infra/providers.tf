@@ -10,6 +10,12 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+    # Voor de auth-config van de Container App, waar azurerm nog geen resource
+    # voor heeft.
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.0"
+    }
   }
 
   # Remote state in Azure Storage. Vul deze waarden in met het bootstrap-script
@@ -34,4 +40,8 @@ provider "azurerm" {
     "Microsoft.KeyVault",
     "Microsoft.DBforPostgreSQL",
   ]
+}
+
+provider "azapi" {
+  use_oidc = true
 }

@@ -3,9 +3,10 @@ import { ADMINS, isAdmin, PEOPLE, type Person } from "shared";
 import { APP_VERSION } from "../lib/version";
 
 export function TopBar({
-  me, onChangeMe, onNewRequest, bellCount, bellLabel, onBell,
+  me, devMode, onChangeMe, onNewRequest, bellCount, bellLabel, onBell,
 }: {
   me: Person;
+  devMode: boolean;
   onChangeMe: (p: Person) => void;
   onNewRequest: () => void;
   bellCount: number;
@@ -37,14 +38,22 @@ export function TopBar({
           </svg>
           {bellCount > 0 && <span className="bellcount">{bellCount > 99 ? "99+" : bellCount}</span>}
         </button>
-        <div className="who">
-          <label htmlFor="whoami">Ik ben</label>
-          <select id="whoami" value={me} onChange={(e) => onChangeMe(e.target.value as Person)}>
-            {PEOPLE.map((p) => (
-              <option key={p} value={p}>{p}{(ADMINS as readonly string[]).includes(p) ? " (admin)" : ""}</option>
-            ))}
-          </select>
-        </div>
+        {devMode ? (
+          // Alleen lokaal: in Azure bepaalt de Entra-login wie je bent.
+          <div className="who">
+            <label htmlFor="whoami">Ik ben</label>
+            <select id="whoami" value={me} onChange={(e) => onChangeMe(e.target.value as Person)}>
+              {PEOPLE.map((p) => (
+                <option key={p} value={p}>{p}{(ADMINS as readonly string[]).includes(p) ? " (admin)" : ""}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="who">
+            <span>{me}</span>
+            <a href="/.auth/logout?post_logout_redirect_uri=/" title="Uitloggen">Uitloggen</a>
+          </div>
+        )}
         <button className="btn primary" onClick={onNewRequest}>Nieuwe aanvraag</button>
       </header>
       {about && <AboutModal onClose={() => setAbout(false)} />}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { isAdmin } from "shared";
+import { isAdmin, type Person } from "shared";
 import { useSession } from "./lib/useSession";
 import { api } from "./lib/api";
 import { useActivityNotices } from "./lib/useActivityNotices";
@@ -14,7 +14,29 @@ import { ReviewPage } from "./pages/ReviewPage";
 import { AllRequestsPage } from "./pages/AllRequestsPage";
 
 export default function App() {
-  const { me, setMe, admin } = useSession();
+  const session = useSession();
+  if (session.status === "loading") return null;
+  if (session.status !== "ready") {
+    return (
+      <main className="gate">
+        <h1>Team S</h1>
+        <p>{session.message}</p>
+        {session.status === "not_in_team" && (
+          <p>Vraag Alexandra of Marc om je adres toe te voegen, of log in met een ander account.</p>
+        )}
+        <a className="btn" href="/.auth/logout?post_logout_redirect_uri=/">Uitloggen</a>
+      </main>
+    );
+  }
+  return <Shell me={session.me} setMe={session.setMe} admin={session.admin} devMode={session.devMode} />;
+}
+
+function Shell({ me, setMe, admin, devMode }: {
+  me: Person;
+  setMe: (p: Person) => void;
+  admin: boolean;
+  devMode: boolean;
+}) {
   const [tab, setTab] = useState<TabId>("kalender");
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [openCount, setOpenCount] = useState(0);
@@ -47,7 +69,7 @@ export default function App() {
   const notices = useActivityNotices(me, !admin, refreshSignal);
   const [showNotices, setShowNotices] = useState(false);
 
-  function changeMe(p: typeof me) {
+  function changeMe(p: Person) {
     setMe(p);
     if (!isAdmin(p) && (tab === "beoordelen" || tab === "alle")) setTab("kalender");
   }
@@ -57,6 +79,7 @@ export default function App() {
       <PullToRefresh onRefresh={refresh} />
       <TopBar
         me={me}
+        devMode={devMode}
         onChangeMe={changeMe}
         onNewRequest={() => setShowNewRequest(true)}
         bellCount={admin ? openCount : notices.unseen.length}

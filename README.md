@@ -7,7 +7,7 @@ met Postgres als opslag. Infrastructuur staat als Terraform in dezelfde repo
 en wordt uitgerold door GitHub Actions.
 
 Zie [docs/team-s.md](docs/team-s.md) voor de functionele spelregels (rooster,
-aanvraagstatussen, wie wat mag) en wat er nog naar echte inlog (Entra ID) moet.
+aanvraagstatussen, wie wat mag) en wat er nog niet af is.
 
 ## Wat er in zit
 
@@ -94,22 +94,39 @@ az containerapp hostname bind --hostname teams.monkel.com \
   --environment cae-starter-dev --validation-method CNAME
 ```
 
-## Login: nu een placeholder, straks Entra ID
+## Login: Entra ID
 
-De app vraagt nu bij elk verzoek wie je bent via een header (`x-user`) die de
-frontend zet op basis van een simpele personenkiezer â€” er wordt niets
-geverifieerd. Dat is bewust zo gehouden om het rooster, de aanvragen en de
-goedkeuringsflow te kunnen bouwen en testen zonder eerst een hele
-inlogketen op te tuigen.
+In Azure kom je alleen bij de app na inloggen met Microsoft Entra ID. Dat doet
+de ingebouwde authenticatie van Container Apps (`azapi_resource.auth` in
+`infra/main.tf`), vóór de app. De API leest wie er is ingelogd uit de
+`X-MS-CLIENT-PRINCIPAL`-header die het platform meestuurt en die een browser
+niet zelf kan zetten, en koppelt het e-mailadres aan een teamlid
+(`api/src/middleware/auth.ts`). Alleen `/api/health` is zonder login bereikbaar.
 
-Voor een echte uitrol moet dit vervangen worden door Microsoft Entra ID:
-* de frontend haalt met MSAL een id-token op voor de API;
-* `api/src/middleware/auth.ts` valideert dat token tegen Entra's JWKS-endpoint
-  in plaats van de `x-user`-header te vertrouwen.
+Lokaal draait er geen login (`APP_ENV` niet gezet): dan kies je met de
+personenkiezer wie je bent, via de `x-user`-header. In Azure negeert de API die
+header.
 
-Zolang dat niet is aangesloten, kan iedereen met toegang tot de app zich
-voordoen als wie dan ook â€” inclusief als admin. Zie de `TODO Entra ID`-comments
-in `api/src/middleware/auth.ts` en `web/src/lib/api.ts` voor de precieze plek.
+Wat buiten Terraform staat, omdat de GitHub Actions-identity geen rechten in
+Entra heeft:
+
+* **App registration** "Team S planning" (client ID in `entra_client_id`), met
+  redirect-URI `https://teams.monkel.com/.auth/login/aad/callback`.
+* **Key Vault-secret `entra-client-secret`**: het client secret van die app
+  registration. Het verloopt op 17 oktober 2028. Vernieuwen:
+  ```
+  az ad app credential reset --id <client-id> --display-name container-app-auth --years 2 \
+    --query password -o tsv | tr -d '\r\n' \
+    | az keyvault secret set --vault-name kv-starter-dev-loe70 --name entra-client-secret --file /dev/stdin
+  ```
+* **Key Vault-secret `team-emails`**: welk e-mailadres bij welk teamlid hoort,
+  als JSON, bijvoorbeeld `{"Marc": "marc@monkel.com", "Nicole": ["a@x.nl", "b@y.nl"]}`.
+  Dit staat niet in de code omdat de repo publiek is. Na een wijziging een
+  nieuwe revisie starten (`az containerapp revision restart`) zodat de app het
+  oppikt.
+* **Gastuitnodigingen**: elk teamlid wordt als gast uitgenodigd in de tenant,
+  met hetzelfde adres als in `team-emails`. Inloggen gaat daarna met hun eigen
+  Microsoft-account of met een eenmalige code per mail.
 
 ## Database
 
@@ -132,8 +149,6 @@ in de orde van een paar tientjes per maand voor een team van deze omvang.
 
 ## Volgende stappen
 
-- Entra ID-login aansluiten (zie hierboven) â€” dit is de belangrijkste voor een
-  echte uitrol.
 - Een tweede omgeving: `terraform workspace` of een aparte tfvars per omgeving,
   met een `prod`-environment in GitHub die een reviewer vereist.
 - E-mailnotificatie naar Alexandra/Marc bij een nieuwe aanvraag, en naar de

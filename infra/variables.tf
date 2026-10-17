@@ -71,3 +71,9 @@ variable "kv_secrets_officers" {
     github = "d00b41be-3620-4c78-98df-f161dacbc843"
   }
 }
+
+variable "entra_client_id" {
+  description = "Application (client) ID van de app registration 'Team S planning' in Entra ID, waarmee teamleden inloggen."
+  type        = string
+  default     = "5ab68645-317c-4824-80f6-53d830857012"
+}

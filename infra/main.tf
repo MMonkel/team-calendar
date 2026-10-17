@@ -101,6 +101,22 @@ resource "azurerm_container_app" "main" {
     identity            = azurerm_user_assigned_identity.app.id
   }
 
+  # Deze twee secrets zet je met de hand in Key Vault (zie README, "Login"),
+  # zodat het client secret en de e-mailadressen nooit in Terraform-state of
+  # in deze publieke repo staan. Versieloze verwijzing: een nieuwe versie in
+  # Key Vault wordt vanzelf opgepikt.
+  secret {
+    name                = "entra-client-secret"
+    key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/entra-client-secret"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "team-emails"
+    key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/team-emails"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
   ingress {
     external_enabled = true
     target_port      = 8080
@@ -139,6 +155,11 @@ resource "azurerm_container_app" "main" {
         secret_name = "database-url"
       }
 
+      env {
+        name        = "TEAM_EMAILS"
+        secret_name = "team-emails"
+      }
+
       liveness_probe {
         transport = "HTTP"
         port      = 8080
@@ -173,5 +194,39 @@ resource "azurerm_container_app_custom_domain" "main" {
 
   lifecycle {
     ignore_changes = [certificate_binding_type, container_app_environment_certificate_id]
+  }
+}
+
+# Login via Entra ID met de ingebouwde authenticatie van Container Apps: niemand
+# komt bij de app zonder in te loggen, en de API leest wie er is ingelogd uit
+# de X-MS-CLIENT-PRINCIPAL-header die het platform zet (en die een client niet
+# zelf kan meesturen). De app registration zelf staat buiten Terraform, omdat
+# de GitHub Actions-identity geen rechten in Entra heeft; zie README.
+resource "azapi_resource" "auth" {
+  type      = "Microsoft.App/containerApps/authConfigs@2024-03-01"
+  name      = "current"
+  parent_id = azurerm_container_app.main.id
+
+  body = {
+    properties = {
+      platform = { enabled = true }
+      globalValidation = {
+        unauthenticatedClientAction = "RedirectToLoginPage"
+        redirectToProvider          = "azureactivedirectory"
+        # De deploy-workflow checkt de health via de publieke URL.
+        excludedPaths = ["/api/health"]
+      }
+      identityProviders = {
+        azureActiveDirectory = {
+          enabled = true
+          registration = {
+            clientId                = var.entra_client_id
+            clientSecretSettingName = "entra-client-secret"
+            openIdIssuer            = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/v2.0"
+          }
+        }
+      }
+      httpSettings = { requireHttps = true }
+    }
   }
 }

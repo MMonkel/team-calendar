@@ -113,8 +113,6 @@ admins kunnen activiteiten aanmaken, aanpassen en verwijderen (`api/src/routes/a
 
 ## Wat nog niet af is
 
-* **Login is een placeholder** — zie de "Login"-sectie in de hoofd-README.
-  Zonder Entra ID kan iedereen zich voordoen als een admin.
 * **Geen notificaties** — een admin moet zelf op "Te beoordelen" kijken; een
   aanvrager moet zelf terugkomen om een beslissing te zien.
 * **Geen bezettingsoverzicht los van het rooster** — of een dag "genoeg mensen"

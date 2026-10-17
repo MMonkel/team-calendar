@@ -46,6 +46,9 @@ button{font:inherit; color:inherit;}
 .bellcount{position:absolute; top:.05rem; right:-.05rem; min-width:1.15rem; height:1.15rem; padding:0 .3rem; border-radius:999px; background:var(--bad); color:var(--panel); font-size:.7rem; font-weight:700; line-height:1.15rem; text-align:center;}
 .newtag{display:inline-block; margin-left:.45em; padding:0 .4em; border-radius:999px; background:var(--activity); color:var(--panel); font-size:.7rem; font-weight:700; vertical-align:.1em;}
 .who{display:flex; align-items:center; gap:.45rem; font-size:.9rem;}
+.who a{color:var(--muted); font-size:.85rem;}
+.gate{max-width:28rem; margin:15vh auto; padding:0 16px; text-align:center;}
+.gate h1{font-size:1.4rem;}
 .who select{font:inherit; padding:.32rem .5rem; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--ink);}
 
 .tabs{display:flex; gap:.15rem; overflow-x:auto; padding:0 .6rem; background:var(--panel); border-bottom:1px solid var(--line);}

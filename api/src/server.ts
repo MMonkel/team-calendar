@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PEOPLE } from "shared";
-import { resolveUser } from "./middleware/auth.js";
+import { devMode, resolveUser } from "./middleware/auth.js";
 import { requestsRouter } from "./routes/requests.js";
 import { rosterRouter } from "./routes/roster.js";
 import { overviewRouter } from "./routes/overview.js";
@@ -32,6 +32,16 @@ app.get("/api/info", (_req, res) => {
 // Team-samenstelling, zodat de frontend niet los in sync hoeft te blijven.
 app.get("/api/team", (_req, res) => {
   res.json({ people: PEOPLE });
+});
+
+// Wie er is ingelogd. In devMode is er geen login en kiest de frontend zelf
+// met de personenkiezer, dus dan is alleen 'devMode: true' relevant.
+app.get("/api/me", (req, res) => {
+  if (devMode) {
+    res.json({ person: null, devMode });
+    return;
+  }
+  resolveUser(req, res, () => res.json({ person: req.user, devMode }));
 });
 
 app.use("/api/requests", resolveUser, requestsRouter);

@@ -2,10 +2,9 @@ import type {
   AbsenceKind, Activity, AnyRequest, DateKey, ExtraDayEntry, FreeDayEntry, Holiday, Person, Replacements, RequestChange,
 } from "shared";
 
-// TODO Entra ID: dit stuurt nu alleen wie de gebruiker beweert te zijn, in
-// een header die de API vertrouwt zonder bewijs (zie api/src/middleware/auth.ts).
-// Zodra MSAL is aangesloten, vervangt dit een 'Authorization: Bearer <token>'
-// header met een echt id-token, en verdwijnt de handmatige personenkiezer.
+// In Azure logt Container Apps-auth de gebruiker in via Entra ID en weet de
+// API zelf wie er is. Alleen lokaal (devMode) kies je met de personenkiezer
+// wie je bent; dat gaat mee in de 'x-user'-header, die de API in Azure negeert.
 let currentUser: Person | null = null;
 export function setCurrentUser(p: Person) {
   currentUser = p;
@@ -13,6 +12,19 @@ export function setCurrentUser(p: Person) {
 }
 export function getCurrentUser(): Person | null {
   return currentUser;
+}
+
+// Sessie verlopen: herladen laat Container Apps-auth opnieuw inloggen. Hooguit
+// eens per halve minuut, zodat een structureel probleem geen herlaadlus wordt.
+export function reloginOnce() {
+  try {
+    const last = Number(sessionStorage.getItem("teams.relogin") ?? 0);
+    if (Date.now() - last < 30_000) return;
+    sessionStorage.setItem("teams.relogin", String(Date.now()));
+  } catch {
+    // Geen sessionStorage: gewoon herladen.
+  }
+  window.location.reload();
 }
 
 export class ApiError extends Error {
@@ -26,10 +38,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      // Hiermee geeft Container Apps-auth bij een verlopen sessie een 401
+      // terug in plaats van een redirect naar de loginpagina.
+      "X-Requested-With": "XMLHttpRequest",
       ...(currentUser ? { "x-user": currentUser } : {}),
       ...(init?.headers ?? {}),
     },
   });
+  if (res.status === 401 && !path.startsWith("/me")) reloginOnce();
   if (res.status === 204) return undefined as T;
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -50,6 +66,7 @@ export interface DayRoster {
 
 export const api = {
   team: () => request<{ people: Person[] }>("/team"),
+  me: () => request<{ person: Person | null; devMode: boolean }>("/me"),
 
   roster: (from: DateKey, to: DateKey) =>
     request<DayRoster[]>(`/roster?from=${from}&to=${to}`),
