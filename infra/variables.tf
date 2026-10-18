@@ -89,3 +89,9 @@ variable "email_domain_verified" {
   type        = bool
   default     = true
 }
+
+variable "monthly_budget_eur" {
+  description = "Maandbudget in euro voor de hele subscription. Daarboven (of als Azure verwacht dat je erboven komt) krijgt de Owner een mail."
+  type        = number
+  default     = 10
+}

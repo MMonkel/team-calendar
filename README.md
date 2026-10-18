@@ -176,6 +176,11 @@ als er geen verkeer is. Postgres Flexible Server draait op de kleinste burstable
 SKU (`B_Standard_B1ms`); dat is samen met ACR Basic, Log Analytics en Key Vault
 in de orde van een paar tientjes per maand voor een team van deze omvang.
 
+Er staat een maandbudget van €10 op de subscription (`infra/budget.tf`,
+variabele `monthly_budget_eur`). De Owner van de subscription krijgt een mail
+als Azure verwacht dat de maand daarboven uitkomt, en als de werkelijke kosten
+80% en 100% halen. Een budget waarschuwt alleen: er wordt niets uitgezet.
+
 ## Volgende stappen
 
 - Een tweede omgeving: `terraform workspace` of een aparte tfvars per omgeving,
