@@ -87,5 +87,5 @@ variable "email_domain" {
 variable "email_domain_verified" {
   description = "Zet op true zodra het maildomein in Communication Services geverifieerd is (zie README, \"E-mail\"). Pas dan koppelt Terraform het domein en gaat de app mail versturen."
   type        = bool
-  default     = false
+  default     = true
 }
