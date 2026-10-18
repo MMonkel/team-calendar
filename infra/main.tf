@@ -160,6 +160,25 @@ resource "azurerm_container_app" "main" {
         secret_name = "team-emails"
       }
 
+      env {
+        name  = "APP_URL"
+        value = var.custom_domain == "" ? "" : "https://${var.custom_domain}"
+      }
+
+      # Mailinstellingen pas zodra het maildomein gekoppeld is (email.tf);
+      # zonder ACS_ENDPOINT verstuurt de app niets en logt hij alleen.
+      dynamic "env" {
+        for_each = var.email_domain_verified ? {
+          ACS_ENDPOINT    = "https://${azurerm_communication_service.main.hostname}"
+          MAIL_FROM       = "noreply@${var.custom_domain}"
+          AZURE_CLIENT_ID = azurerm_user_assigned_identity.app.client_id
+        } : {}
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+
       liveness_probe {
         transport = "HTTP"
         port      = 8080

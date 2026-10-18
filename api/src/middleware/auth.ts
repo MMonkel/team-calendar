@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { isAdmin, isPerson, type Person } from "shared";
+import { personForEmail } from "../teamEmails.js";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -17,38 +18,6 @@ declare global {
  * de login via Entra ID.
  */
 export const devMode = (process.env.APP_ENV ?? "local") === "local";
-
-/**
- * Koppeling e-mailadres → teamlid, uit de env var TEAM_EMAILS (in Azure een
- * Key Vault-secret). Staat bewust niet in de code: de repo is publiek.
- * Formaat: {"Marc": "marc@monkel.com", "Nicole": ["nicole@x.nl", "n@y.nl"]}
- */
-const emailToPerson = loadTeamEmails(process.env.TEAM_EMAILS);
-
-function loadTeamEmails(raw: string | undefined): Map<string, Person> {
-  const map = new Map<string, Person>();
-  if (!raw) {
-    if (!devMode) console.error("TEAM_EMAILS ontbreekt: niemand kan inloggen.");
-    return map;
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    console.error("TEAM_EMAILS is geen geldige JSON: niemand kan inloggen.");
-    return map;
-  }
-  for (const [person, emails] of Object.entries(parsed as Record<string, unknown>)) {
-    if (!isPerson(person)) {
-      console.error(`TEAM_EMAILS: '${person}' is geen teamlid, overgeslagen.`);
-      continue;
-    }
-    for (const email of Array.isArray(emails) ? emails : [emails]) {
-      if (typeof email === "string") map.set(email.trim().toLowerCase(), person);
-    }
-  }
-  return map;
-}
 
 // Claims waar een e-mailadres in kan staan. Bij gasten (B2B) is 'upn' de
 // #EXT#-vorm en staat het echte adres in 'email' of 'preferred_username'.
@@ -100,7 +69,7 @@ export function resolveUser(req: Request, res: Response, next: NextFunction) {
     res.status(401).json({ error: "unauthenticated", message: "Niet ingelogd." });
     return;
   }
-  const person = emails.map((e) => emailToPerson.get(e)).find((p): p is Person => p !== undefined);
+  const person = emails.map(personForEmail).find((p): p is Person => p !== undefined);
   if (!person) {
     // Liefst het echte adres tonen, niet de #EXT#-vorm van een gast.
     const shown = emails.find((e) => !e.includes("#ext#")) ?? emails[0];

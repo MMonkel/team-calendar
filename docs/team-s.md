@@ -113,7 +113,5 @@ admins kunnen activiteiten aanmaken, aanpassen en verwijderen (`api/src/routes/a
 
 ## Wat nog niet af is
 
-* **Geen notificaties** — een admin moet zelf op "Te beoordelen" kijken; een
-  aanvrager moet zelf terugkomen om een beslissing te zien.
 * **Geen bezettingsoverzicht los van het rooster** — of een dag "genoeg mensen"
   heeft, zie je alleen door te kijken of alle dagdelen een naam hebben.

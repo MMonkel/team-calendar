@@ -128,6 +128,33 @@ Entra heeft:
   met hetzelfde adres als in `team-emails`. Inloggen gaat daarna met hun eigen
   Microsoft-account of met een eenmalige code per mail.
 
+## E-mail
+
+Bij een nieuwe aanvraag (vrije dag, vakantie, verplaatsing of terugzetten)
+krijgen Alexandra en Marc een mail; is de aanvrager zelf een van hen, dan alleen
+de ander. Bij goedkeuren of afkeuren krijgt de aanvrager een mail, behalve als
+die zelf de beslissing nam. Adressen komen uit `team-emails` (zie "Login"). De
+code staat in `api/src/notifications.ts`; een mislukte mail wordt gelogd en
+blokkeert nooit de aanvraag.
+
+Versturen gaat via Azure Communication Services (`infra/email.tf`) vanaf
+`noreply@teams.monkel.com`, met de managed identity van de app. Het domein moet
+eerst geverifieerd zijn, dus de eerste keer gaat het in twee stappen:
+
+1. Apply met `email_domain_verified = false` (de standaard). De output
+   `email_dns_records` geeft de records die in ZoneEdit moeten: een TXT voor
+   verificatie, een TXT voor SPF en twee CNAME's voor DKIM.
+2. Records zetten, dan per type verifiëren:
+   ```
+   for t in Domain SPF DKIM DKIM2; do
+     az communication email domain initiate-verification --domain-name teams.monkel.com \
+       --email-service-name ecs-starter-dev --resource-group rg-starter-dev --verification-type $t
+   done
+   ```
+3. Als alle vier `Verified` zijn, `email_domain_verified` op `true` zetten en
+   pushen. Dan koppelt Terraform het domein en krijgt de app `ACS_ENDPOINT`;
+   zonder die variabele verstuurt de app niets en logt hij alleen.
+
 ## Database
 
 E©n tabel (`requests`) met alle drie de aanvraagtypes (vrije
@@ -151,5 +178,3 @@ in de orde van een paar tientjes per maand voor een team van deze omvang.
 
 - Een tweede omgeving: `terraform workspace` of een aparte tfvars per omgeving,
   met een `prod`-environment in GitHub die een reviewer vereist.
-- E-mailnotificatie naar Alexandra/Marc bij een nieuwe aanvraag, en naar de
-  aanvrager bij een beslissing.

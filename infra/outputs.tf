@@ -31,3 +31,11 @@ output "custom_domain_cname_target" {
   description = "Waar de CNAME van het eigen domein naar moet wijzen."
   value       = azurerm_container_app.main.ingress[0].fqdn
 }
+
+output "email_dns_records" {
+  description = "DNS-records die in ZoneEdit moeten om het maildomein te verifiëren."
+  value = {
+    for k, r in azurerm_email_communication_service_domain.main.verification_records[0] :
+    k => r[0] if length(r) > 0
+  }
+}

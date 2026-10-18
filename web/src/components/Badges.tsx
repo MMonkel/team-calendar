@@ -23,9 +23,5 @@ export function StatusPill({ status }: { status: RequestStatus }) {
   return <span className={"pill " + cls}>{label}</span>;
 }
 
-export function typeLabel(r: Pick<AnyRequest, "type"> & { kind?: string }): string {
-  if (r.type === "absence") return r.kind === "vacation" ? "Vakantie" : "Vrije dag";
-  if (r.type === "move") return "Verplaatsing";
-  if (r.type === "revert") return "Terug naar werkdag";
-  return r.type;
-}
+// Staat in shared, zodat de e-mails van de API dezelfde namen gebruiken.
+export { typeLabel } from "shared";

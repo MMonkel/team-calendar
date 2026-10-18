@@ -77,3 +77,9 @@ variable "entra_client_id" {
   type        = string
   default     = "5ab68645-317c-4824-80f6-53d830857012"
 }
+
+variable "email_domain_verified" {
+  description = "Zet op true zodra het maildomein in Communication Services geverifieerd is (zie README, \"E-mail\"). Pas dan koppelt Terraform het domein en gaat de app mail versturen."
+  type        = bool
+  default     = false
+}

@@ -34,11 +34,13 @@ provider "azurerm" {
   use_oidc = true
 
   # azurerm 4.x registreert standaard alleen een kernset resource providers.
-  # Key Vault en Postgres Flexible Server staan hier expliciet bij zodat een
-  # verse subscription niet faalt op een niet-geregistreerde provider.
+  # Key Vault, Postgres Flexible Server en Communication Services staan hier
+  # expliciet bij zodat een verse subscription niet faalt op een
+  # niet-geregistreerde provider.
   resource_providers_to_register = [
     "Microsoft.KeyVault",
     "Microsoft.DBforPostgreSQL",
+    "Microsoft.Communication",
   ]
 }
 

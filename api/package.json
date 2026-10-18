@@ -12,11 +12,13 @@
     "migrate:prod": "node dist/db/migrate.js"
   },
   "dependencies": {
+    "@azure/communication-email": "^1.1.0",
+    "@azure/identity": "^4.14.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "pg": "^8.13.1",
-    "zod": "^3.24.1",
-    "shared": "*"
+    "shared": "*",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

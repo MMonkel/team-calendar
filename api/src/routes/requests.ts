@@ -5,6 +5,7 @@ import {
   type MoveRequest, ownShiftsInRange, type RequestChange, type RevertRequest, snapshotOf,
 } from "shared";
 import { requireAdmin } from "../middleware/auth.js";
+import { notifyDecision, notifyNewRequest } from "../notifications.js";
 import {
   deleteRequest, getRequest, insertChange, insertRequest, listChanges, listRequests, updateRequestFields,
 } from "../db/requestsRepo.js";
@@ -74,6 +75,7 @@ requestsRouter.post("/", async (req, res) => {
     };
     await insertRequest(request);
     res.status(201).json(request);
+    notifyNewRequest(request);
   } catch (err) {
     if (handleValidation(res, err)) return;
     if (err instanceof z.ZodError) { res.status(400).json({ error: "invalid_argument", message: err.message }); return; }
@@ -133,6 +135,7 @@ requestsRouter.post("/:id/move", async (req, res) => {
     };
     await insertRequest(move);
     res.status(201).json(move);
+    notifyNewRequest(move);
   } catch (err) {
     if (handleValidation(res, err)) return;
     if (err instanceof z.ZodError) { res.status(400).json({ error: "invalid_argument", message: err.message }); return; }
@@ -169,6 +172,7 @@ requestsRouter.post("/:id/revert", async (req, res) => {
   };
   await insertRequest(revert);
   res.status(201).json(revert);
+  notifyNewRequest(revert);
 });
 
 const editSchema = z.object({
@@ -286,7 +290,9 @@ requestsRouter.post("/:id/decision", requireAdmin, async (req, res) => {
     await updateRequestFields(decision.id, {
       status: "rejected", reviewedBy, reviewedAt, comment: (body.comment ?? "").trim(),
     });
-    res.json(await getRequest(decision.id));
+    const rejected = (await getRequest(decision.id))!;
+    res.json(rejected);
+    notifyDecision(rejected);
     return;
   }
 
@@ -306,7 +312,9 @@ requestsRouter.post("/:id/decision", requireAdmin, async (req, res) => {
     }
     await updateRequestFields(decision.id, { status: "approved", reviewedBy, reviewedAt });
   }
-  res.json(await getRequest(decision.id));
+  const approved = (await getRequest(decision.id))!;
+  res.json(approved);
+  notifyDecision(approved);
 });
 
 /** Hoeveel dagdelen van de aanvrager in [from,to] nog geen vervanger hebben — voor de waarschuwing bij beoordelen. */
