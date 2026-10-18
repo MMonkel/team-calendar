@@ -138,8 +138,10 @@ code staat in `api/src/notifications.ts`; een mislukte mail wordt gelogd en
 blokkeert nooit de aanvraag.
 
 Versturen gaat via Azure Communication Services (`infra/email.tf`) vanaf
-`noreply@teams.monkel.com`, met de managed identity van de app. Het domein moet
-eerst geverifieerd zijn, dus de eerste keer gaat het in twee stappen:
+`noreply@planning.monkel.com`, met de managed identity van de app. Dat is een
+apart subdomein omdat op `teams.monkel.com` al de CNAME van de app staat, en een
+naam met een CNAME geen TXT-records ernaast mag hebben. Het domein moet eerst
+geverifieerd zijn, dus de eerste keer gaat het in twee stappen:
 
 1. Apply met `email_domain_verified = false` (de standaard). De output
    `email_dns_records` geeft de records die in ZoneEdit moeten: een TXT voor
@@ -147,7 +149,7 @@ eerst geverifieerd zijn, dus de eerste keer gaat het in twee stappen:
 2. Records zetten, dan per type verifiëren:
    ```
    for t in Domain SPF DKIM DKIM2; do
-     az communication email domain initiate-verification --domain-name teams.monkel.com \
+     az communication email domain initiate-verification --domain-name planning.monkel.com \
        --email-service-name ecs-starter-dev --resource-group rg-starter-dev --verification-type $t
    done
    ```

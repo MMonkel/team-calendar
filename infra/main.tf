@@ -170,7 +170,7 @@ resource "azurerm_container_app" "main" {
       dynamic "env" {
         for_each = var.email_domain_verified ? {
           ACS_ENDPOINT    = "https://${azurerm_communication_service.main.hostname}"
-          MAIL_FROM       = "noreply@${var.custom_domain}"
+          MAIL_FROM       = "noreply@${var.email_domain}"
           AZURE_CLIENT_ID = azurerm_user_assigned_identity.app.client_id
         } : {}
         content {

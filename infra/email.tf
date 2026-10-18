@@ -1,5 +1,7 @@
 # E-mailnotificaties via Azure Communication Services, vanaf
-# noreply@<eigen domein>. Het domein moet eerst in DNS geverifieerd zijn
+# noreply@<email_domain>. Dat is een ander subdomein dan dat van de app: op
+# teams.monkel.com staat een CNAME, en daarnaast mogen geen TXT-records voor
+# verificatie en SPF staan. Het domein moet eerst in DNS geverifieerd zijn
 # voordat de communication service het mag gebruiken, dus dit gaat in twee
 # stappen (zie README, "E-mail"):
 #   1. apply met email_domain_verified = false: maakt de services en het domein
@@ -15,7 +17,7 @@ resource "azurerm_email_communication_service" "main" {
 }
 
 resource "azurerm_email_communication_service_domain" "main" {
-  name              = var.custom_domain
+  name              = var.email_domain
   email_service_id  = azurerm_email_communication_service.main.id
   domain_management = "CustomerManaged"
   tags              = local.tags
